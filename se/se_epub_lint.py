@@ -1090,6 +1090,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 		(r"^https://www\.pgdp\.org/ols\b", "Distributed Proofreaders Open Library System"),
 		(r"^https://www\.pgdpcanada\.net", "Distributed Proofreaders Canada"),
 		(r"^https://www\.fadedpage\.com", "Faded Page"),
+		(r"^https://en\.wikisource\.org/", "Wikisource"),
 	):
 		contributor_links = f"/package/metadata/link[re:test(@href, '{url_pattern}')]/@refines"
 		nodes = self.metadata_dom.xpath(f"/package/metadata/dc:contributor[concat('#', @id) = {contributor_links} and not(text()='{name}')] | /package/metadata/meta[@property='file-as' and @refines = {contributor_links} and substring(@refines, 2) = /package/metadata/dc:contributor/@id and not(text()='{name}')]")
@@ -1821,6 +1822,10 @@ def _lint_special_file_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 		nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www\\.fadedpage\\.com') and not(text()='Faded Page')]")
 		if nodes:
 			messages.append(LintMessage("m-071", "Contributor name must be [text]Faded Page[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+
+		nodes = dom.xpath("/html/body//a[re:test(@href, '^https://en\\.wikisource\\.org/') and not(text()='Wikisource')]")
+		if nodes:
+			messages.append(LintMessage("m-071", "Contributor name must be [text]Wikisource[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 		nodes = dom.xpath("/html/body//p[re:test(., '\\ba transcription\\b') and ./a[contains(@href, '#transcriptions')]]")
 		if nodes:
