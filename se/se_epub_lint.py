@@ -260,8 +260,7 @@ METADATA
 "m-068", "[xml]<dc:title>[/] element missing matching [xml]<meta property=\"title-type\">[/] element."
 "m-069", "[text]comprised of[/] in metadata. [hint]Hint: Is there a better phrase to use here?[/hint]"
 "m-070", "Glossary entries not present in the text:"
-"m-071", "DP link must be exactly [text]Distributed Proofreaders[/]."
-"m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/]."
+"m-071", "Contributor name must be [text]VALUE[/]."
 "m-073", "Anonymous contributor values must be exactly [text]Anonymous[/]."
 "m-074", "Multiple transcriptions found in metadata, but no link to [text]EBOOK_URL#transcriptions[/]."
 "m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/]."
@@ -269,9 +268,7 @@ METADATA
 "m-077", "MathML found in ebook, but no [val]schema:accessibilityFeature[/] properties set to [val]MathML[/] and [val]describedMath[/] in metadata."
 "m-078", "Nobel Prize strings must read [text]Nobel Prize in ...[/]."
 "m-079", "Ebook looks like a collection, but no [xml]<meta property=\"schema:additionalType\">http://schema.org/Collection</meta>[/] element in metadata."
-"m-080", "DP link must be exactly [text]Distributed Proofreaders Canada[/]."
 "m-081", "When a work was published or completed between a range of years, the text must be [text]between year1 and year2[/]."
-"m-082", "Faded Page link text must be exactly [text]Faded Page[/]."
 "m-083", "[xhtml]<meta property=\"title-type\">[/] element without sibling element with contents of [val]main[/], [val]subtitle[/], [val]expanded[/], or [val]short[/]."
 "m-084", "Empty file. [hint]Hint: Empty files should be deleted..[/hint]"
 "m-085", "Non-canonical PGDP URL. Expected: [url]https://www.pgdp.net/[/]."
@@ -299,6 +296,9 @@ METADATA
 "m-108", "[val]schema:sameAs[/] URL not pointing to [url]https://en.wikipedia.org/[/] or [url]https://id.loc.gov/[/]. [hint]Hint: Other URLs should be [val]schema:url[/].[/hint]"
 "m-109", "Non-canonical GitHub URL. [hint]Hint: URLs must start with [url]https://github.com/[/] and have no trailing slash.[/hint]"
 UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+"m-072", ""
+"m-080", ""
+"m-082", ""
 "m-104", ""
 
 SEMANTICS & CONTENT
@@ -1084,6 +1084,18 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	if nodes:
 		messages.append(LintMessage("m-096", "Whitespace around [text]--[/] in LCSH [xml]<dc:subject>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
+	# Check organization names and their file-as values when a contributor has a matching URL.
+	for url_pattern, name in (
+		(r"^https://www\.pgdp\.net", "Distributed Proofreaders"),
+		(r"^https://www\.pgdp\.org/ols\b", "Distributed Proofreaders Open Library System"),
+		(r"^https://www\.pgdpcanada\.net", "Distributed Proofreaders Canada"),
+		(r"^https://www\.fadedpage\.com", "Faded Page"),
+	):
+		contributor_links = f"/package/metadata/link[re:test(@href, '{url_pattern}')]/@refines"
+		nodes = self.metadata_dom.xpath(f"/package/metadata/dc:contributor[concat('#', @id) = {contributor_links} and not(text()='{name}')] | /package/metadata/meta[@property='file-as' and @refines = {contributor_links} and substring(@refines, 2) = /package/metadata/dc:contributor/@id and not(text()='{name}')]")
+		if nodes:
+			messages.append(LintMessage("m-071", f"Contributor name must be [text]{name}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
+
 	# Check for incorrect `anonymous` strings in metadata.
 	nodes = self.metadata_dom.xpath("/package/metadata/dc:contributor[re:test(., 'anonymous', 'i') and text() != 'Anonymous'] | /package/metadata/meta[@property='file-as' and re:test(., 'anonymous', 'i') and text() != 'Anonymous']")
 	if nodes:
@@ -1796,19 +1808,19 @@ def _lint_special_file_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 
 		nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www\\.pgdp\\.net') and text()!='Distributed Proofreaders']")
 		if nodes:
-			messages.append(LintMessage("m-071", "DP link must be exactly [text]Distributed Proofreaders[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+			messages.append(LintMessage("m-071", "Contributor name must be [text]Distributed Proofreaders[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 		nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www\\.pgdp\\.org/ols\\b') and text()!='Distributed Proofreaders Open Library System']")
 		if nodes:
-			messages.append(LintMessage("m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+			messages.append(LintMessage("m-071", "Contributor name must be [text]Distributed Proofreaders Open Library System[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 		nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www\\.pgdpcanada\\.net') and text()!='Distributed Proofreaders Canada']")
 		if nodes:
-			messages.append(LintMessage("m-080", "DP link must be exactly [text]Distributed Proofreaders Canada[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+			messages.append(LintMessage("m-071", "Contributor name must be [text]Distributed Proofreaders Canada[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 		nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www\\.fadedpage\\.com') and not(text()='Faded Page')]")
 		if nodes:
-			messages.append(LintMessage("m-082", "Faded Page link text must be exactly [text]Faded Page[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+			messages.append(LintMessage("m-071", "Contributor name must be [text]Faded Page[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 		nodes = dom.xpath("/html/body//p[re:test(., '\\ba transcription\\b') and ./a[contains(@href, '#transcriptions')]]")
 		if nodes:

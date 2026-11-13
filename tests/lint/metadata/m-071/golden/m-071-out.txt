@@ -1,2 +1,22 @@
-m-071 [Error] colophon.xhtml DP link must be exactly `Distributed Proofreaders`.
+m-071 [Error] colophon.xhtml Contributor name must be `Distributed Proofreaders`.
  Line 22:       <a href="https://www.pgdp.net/">Distributed Proofreading Team</a>
+m-071 [Error] content.opf Contributor name must be `Distributed Proofreaders`.
+ Line 66:       <dc:contributor id="transcriber-2">Incorrect Organization</dc:contributor>
+ Line 67:       <meta property="file-as" refines="#transcriber-2">Incorrect Organization</meta>
+ Line 71:       <meta property="file-as" refines="#transcriber-3">Incorrect Organization</meta>
+ Line 74:       <dc:contributor id="transcriber-4">Incorrect Organization</dc:contributor>
+m-071 [Error] content.opf Contributor name must be `Distributed Proofreaders Open Library System`.
+ Line 89:       <dc:contributor id="transcriber-8">Incorrect Organization</dc:contributor>
+ Line 90:       <meta property="file-as" refines="#transcriber-8">Incorrect Organization</meta>
+ Line 94:       <meta property="file-as" refines="#transcriber-9">Incorrect Organization</meta>
+ Line 97:       <dc:contributor id="transcriber-10">Incorrect Organization</dc:contributor>
+m-071 [Error] content.opf Contributor name must be `Distributed Proofreaders Canada`.
+ Line 112:      <dc:contributor id="transcriber-14">Incorrect Organization</dc:contributor>
+ Line 113:      <meta property="file-as" refines="#transcriber-14">Incorrect Organization</meta>
+ Line 117:      <meta property="file-as" refines="#transcriber-15">Incorrect Organization</meta>
+ Line 120:      <dc:contributor id="transcriber-16">Incorrect Organization</dc:contributor>
+m-071 [Error] content.opf Contributor name must be `Faded Page`.
+ Line 135:      <dc:contributor id="transcriber-20">Incorrect Organization</dc:contributor>
+ Line 136:      <meta property="file-as" refines="#transcriber-20">Incorrect Organization</meta>
+ Line 140:      <meta property="file-as" refines="#transcriber-21">Incorrect Organization</meta>
+ Line 143:      <dc:contributor id="transcriber-22">Incorrect Organization</dc:contributor>

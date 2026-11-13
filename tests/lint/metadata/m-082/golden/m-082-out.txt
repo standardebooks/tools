@@ -1,2 +1,0 @@
-m-082 [Error] colophon.xhtml Faded Page link text must be exactly `Faded Page`.
- Line 24:       <a href="https://www.fadedpage.com/showbook.php?pid=20160413">Faded Page Canada</a>

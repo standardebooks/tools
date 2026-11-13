@@ -1,2 +1,0 @@
-m-080 [Error] colophon.xhtml DP link must be exactly `Distributed Proofreaders Canada`.
- Line 22:       <a href="https://www.pgdpcanada.net/">Distributed Proofreading Canada</a>
