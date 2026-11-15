@@ -2,3 +2,13 @@ m-045 [Error] chapter-1.xhtml Heading not found in the ToC.
  Line 4:        A Book of Strife: In the Form Of
 m-045 [Error] chapter-2.xhtml Heading not found in the ToC.
  Line 4:        The Rejected Statement: Part II
+c-007 [Error] extra.css Illegal CSS property. Hint: Place exotic CSS properties inside `@supports()` blocks and ensure rendering is acceptable when that CSS is inactive.
+ Line 4:        `opacity`
+ Line 5:        `align-items`
+ Line 11:       `unknown-property`
+ Line 30:       `opacity`
+ Line 35:       `display: grid`
+ Line 47:       `display: flex`
+ Line 69:       `column-gap`
+ Line 70:       `column-rule`
+ Line 71:       `column-span`

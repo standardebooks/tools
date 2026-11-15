@@ -9,6 +9,7 @@ from bisect import bisect_right
 from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
+import csv
 import fnmatch
 from html import unescape
 import os
@@ -21,6 +22,9 @@ from unidecode import unidecode
 import cssutils
 from PIL import Image, UnidentifiedImageError
 import regex
+import tinycss2.parser
+import tinycss2.serializer
+from tinycss2.ast import AtRule, Comment, Declaration, IdentToken, Node, ParenthesesBlock, QualifiedRule, WhitespaceToken
 from rich.markup import escape
 from natsort import natsorted, ns
 from lxml import etree
@@ -144,6 +148,7 @@ CSS
 "c-004", "Illegal [css-property]border-color[/] specified on element."
 "c-005", "Illegal [css]white-space: nowrap;[/] applied to [css-selector]abbr[/] selector."
 "c-006", "Semantic found, but missing corresponding style CSS style."
+"c-007", "Illegal CSS property. [hint]Hint: Place exotic CSS properties inside [css]@supports()[/] blocks and ensure rendering is acceptable when that CSS is inactive.[/hint]"
 "c-008", "CSS class only used once. [hint]Hint: Craft a selector instead of a single-use class.[/hint]"
 "c-009", "Duplicate CSS selectors. [hint]Hint: Duplicates are only acceptable if overriding S.E. base styles.[/hint]"
 "c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: VALUE;[/]. [hint]Hint: [css-property]text-align[/] is usually set to [val]right[/].[/hint]"
@@ -164,8 +169,6 @@ CSS
 "c-025", "Illegal percent unit used to set [css-property]height[/] or positioning property. [hint]Hint: Use [val]vh[/] to specify vertical-oriented properties like [css-property]height[/] or [css-property]position[/].[/hint]"
 "c-026", "Table that appears to be listing numbers, but without [css]font-variant-numeric: tabular-nums;[/]."
 "c-027", "Illegal [css-property]font-size[/] below [val]1[/]."
-UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -1534,6 +1537,93 @@ def files_not_in_spine(self: 'SeEpub') -> set[Path]:
 	xhtml_files = set(self.content_path.glob("**/*.xhtml"))
 	spine_files = set(self.spine_file_paths + [self.toc_path])
 	return xhtml_files.difference(spine_files)
+
+def css_supports_properties(tokens: list[Node]) -> set[tuple[str, str]]:
+	"""Return property tests guaranteed to succeed by a supports condition."""
+
+	tokens = [token for token in tokens if not isinstance(token, (WhitespaceToken, Comment))]
+	if not tokens or isinstance(tokens[0], IdentToken):
+		# Negated tests do not establish support for a property.
+		return set()
+
+	tests: list[set[tuple[str, str]]] = []
+	operators: list[str] = []
+	for index, token in enumerate(tokens):
+		if index % 2:
+			if not isinstance(token, IdentToken) or token.value.lower() not in ("and", "or"):
+				return set()
+
+			operators.append(token.value.lower())
+		else:
+			properties: set[tuple[str, str]] = set()
+
+			if isinstance(token, ParenthesesBlock):
+				declaration = tinycss2.parser.parse_one_declaration(token.content, skip_comments=True)
+				if isinstance(declaration, Declaration):
+					# The CSV requirements use case-insensitive keyword values.
+					value = tinycss2.serializer.serialize([item for item in declaration.value if not isinstance(item, (WhitespaceToken, Comment))]).lower()
+					properties.add((declaration.lower_name, value))
+					properties.add((declaration.lower_name, ""))
+				else:
+					properties = css_supports_properties(token.content)
+			tests.append(properties)
+
+	if len(operators) != len(tests) - 1 or len(set(operators)) > 1:
+		return set()
+
+	if "or" in operators:
+		# Every alternative must guarantee a property before its use is allowed.
+		return tests[0].intersection(*tests[1:])
+
+	return tests[0].union(*tests[1:])
+
+def lint_css_whitelist(source_file: SourceFile, allowed_properties: dict[str, tuple[str, set[str]]]) -> list[LintMessage]:
+	"""Check for invalid CSS properties."""
+
+	submessages: list[LintSubmessage] = []
+	pending: list[tuple[list[Node], set[tuple[str, str]]]] = [(tinycss2.parser.parse_stylesheet(source_file.contents, skip_comments=True, skip_whitespace=True), set())]
+	while pending:
+		rules, supported = pending.pop()
+
+		for rule in rules:
+			if isinstance(rule, (AtRule, QualifiedRule)) and rule.content is not None:
+				guard = supported
+				# Carry guards into child blocks without exposing them to sibling rules.
+				if isinstance(rule, AtRule) and rule.lower_at_keyword == "supports":
+					guard = supported | css_supports_properties(rule.prelude)
+
+				pending.append((tinycss2.parser.parse_blocks_contents(rule.content, skip_comments=True, skip_whitespace=True), guard))
+
+			elif isinstance(rule, Declaration):
+				approval = allowed_properties.get(rule.lower_name)
+				requirement, allowed_values = approval or ("", set())
+
+				if requirement:
+					valid = any((parts[0].strip(), parts[2].strip()) in supported for parts in (alternative.partition(":") for alternative in requirement.split(",")))
+				else:
+					valid = approval is not None or any(name == rule.lower_name for name, _ in supported)
+
+				unsupported_value = False
+				value = ""
+
+				if allowed_values:
+					# Restricted values require a guard testing the actual declaration value.
+					value = tinycss2.serializer.serialize([item for item in rule.value if not isinstance(item, (WhitespaceToken, Comment))]).lower()
+					unsupported_value = value not in allowed_values and (rule.lower_name, value) not in supported
+					valid = valid and not unsupported_value
+
+				if not valid:
+					if unsupported_value:
+						text = f"[css]{escape(rule.name)}: {escape(tinycss2.serializer.serialize(rule.value).strip())}[/]"
+					else:
+						text = f"[css-property]{escape(rule.name)}[/]"
+
+					submessages.append(LintSubmessage(text, cast(int, getattr(rule, "source_line"))))
+
+	if submessages:
+		return [LintMessage("c-007", "Illegal CSS property. [hint]Hint: Place exotic CSS properties inside [css]@supports()[/] blocks and ensure rendering is acceptable when that CSS is inactive.[/hint]", se.MESSAGE_TYPE_ERROR, source_file.filename, sorted(submessages, key=lambda item: item.line_num or 0))]
+
+	return []
 
 def _lint_css_checks(self: 'SeEpub', local_css_path: Path, abbr_with_whitespace: list[str]) -> list[LintMessage]:
 	"""
@@ -4166,6 +4256,16 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 	#	dump(section, "")
 	# exit()
 
+	# Load the approved properties, values, and required feature tests once per ebook.
+	# The file is a CSV file with the columns Property, Requires, and Values.
+	# Property is an allowed CSS property, like `color`.
+	# Requires is list of comma-separated properties + values that can white list the given property in a `@supports` block, so that we don't need to define every property in `@supports`.
+	# For example, `align-self` can work within a `@supports(display: flex)` block without having to *also* test for `align-self`.
+	# A requirement without a value, like `column-count`, accepts any value tested by the guard.
+	# Values is a comma-separated list of allowed values, for example allow `display: block` and `display: inline` but disallow `display: flex`.
+	with importlib.resources.files("se.data").joinpath("allowed_css.csv").open("r", encoding="utf-8") as whitelist:
+		allowed_css_properties = {row["Property"]: (row["Requires"], {value.strip().lower() for value in row["Values"].split(",") if value.strip()}) for row in csv.DictReader(whitelist)}
+
 	# Now iterate over individual files for some checks.
 	# We use `os.walk()` and not `Path.glob()` so that we can ignore `.git` and its children.
 	for root, directories, filenames in os.walk(self.path):
@@ -4198,7 +4298,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 				messages += _lint_image_checks(self, file_path)
 				continue
 
-			if file_path.suffix in BINARY_OTHER_EXTENSIONS or file_path.name == "core.css":
+			if file_path.suffix in BINARY_OTHER_EXTENSIONS:
 				continue
 
 			# Read the file and start doing some serious checks!
@@ -4207,6 +4307,12 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 			except se.InvalidEncodingException:
 				# This is more to help developers find weird files that might choke `se lint`, hopefully unnecessary for end users.
 				messages.append(LintMessage("f-010", "Problem decoding file as utf-8.", se.MESSAGE_TYPE_ERROR, file_path))
+				continue
+
+			if file_path.suffix == ".css" and not (self.is_se_ebook and file_path.name in ("core.css", "se.css")):
+				messages += lint_css_whitelist(source_file, allowed_css_properties)
+
+			if file_path.name == "core.css":
 				continue
 
 			# Remove comments before we do any further processing.

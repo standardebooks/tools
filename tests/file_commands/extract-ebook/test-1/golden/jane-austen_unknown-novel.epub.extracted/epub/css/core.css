@@ -200,13 +200,15 @@ section.epub-type-contains-word-endnotes > ol > li{
 
 /* Invert images in dark mode. RMSDK requires a target media as well as a state. */
 @media all and (prefers-color-scheme: dark){
-	img.epub-type-contains-word-se-image-color-depth-black-on-transparent{
-		filter: invert(100%);
-	}
+	@supports(filter: invert(100%)){
+		img.epub-type-contains-word-se-image-color-depth-black-on-transparent{
+			filter: invert(100%);
+		}
 
-	img.epub-type-contains-word-se-image-color-depth-black-on-transparent.epub-type-contains-word-se-image-style-realistic{
-		background: currentColor;
-		filter: none;
+		img.epub-type-contains-word-se-image-color-depth-black-on-transparent.epub-type-contains-word-se-image-style-realistic{
+			background: currentColor;
+			filter: none;
+		}
 	}
 }
 

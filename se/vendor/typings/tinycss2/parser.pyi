@@ -21,7 +21,7 @@ def parse_one_component_value(input, skip_comments=...): # -> ParseError:
     """
     ...
 
-def parse_one_declaration(input, skip_comments=...): # -> ParseError | Declaration:
+def parse_one_declaration(input: str | list[Node], skip_comments: bool = ...) -> Node:
     """Parse a single :diagram:`declaration`.
 
     This is used e.g. for a declaration in an `@supports
@@ -40,7 +40,7 @@ def parse_one_declaration(input, skip_comments=...): # -> ParseError | Declarati
     """
     ...
 
-def parse_blocks_contents(input, skip_comments=..., skip_whitespace=...): # -> list[Any]:
+def parse_blocks_contents(input: str | list[Node], skip_comments: bool = ..., skip_whitespace: bool = ...) -> list[Node]:
     """Parse a block’s contents.
 
     This is used e.g. for the :attr:`~tinycss2.ast.QualifiedRule.content`
