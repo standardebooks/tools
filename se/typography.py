@@ -434,7 +434,8 @@ def hyphenate(xhtml: str | EasyXmlTree, language: str | None, ignore_h_tags: boo
 	hyphenator = pyphen.Pyphen(lang=language)
 
 	text = dom.xpath("/html/body")[0].inner_xml()
-	result = ""
+	# Accumulate fragments to avoid repeatedly copying the output text.
+	result: list[str] = []
 	word = ""
 	in_tag = False
 	tag_name = ""
@@ -448,6 +449,7 @@ def hyphenate(xhtml: str | EasyXmlTree, language: str | None, ignore_h_tags: boo
 	for char in text:
 		process = False
 		reading_word = False
+		was_reading_tag_name = reading_tag_name
 
 		if char == "<":
 			process = True
@@ -468,12 +470,13 @@ def hyphenate(xhtml: str | EasyXmlTree, language: str | None, ignore_h_tags: boo
 		elif not in_tag:
 			process = True
 
-		# Do we ignore `<h#>` tags?
-		if not reading_tag_name and regex.match(r"^h[1-6]$", tag_name):
-			in_h_tag = True
+		# Update heading state only when the tag name has finished being read.
+		if was_reading_tag_name and not reading_tag_name:
+			if regex.match(r"^h[1-6]$", tag_name):
+				in_h_tag = True
 
-		if not reading_tag_name and regex.match(r"^/h[1-6]$", tag_name):
-			in_h_tag = False
+			if regex.match(r"^/h[1-6]$", tag_name):
+				in_h_tag = False
 
 		if ignore_h_tags and in_h_tag:
 			process = False
@@ -481,16 +484,16 @@ def hyphenate(xhtml: str | EasyXmlTree, language: str | None, ignore_h_tags: boo
 		if process:
 			if word != "":
 				new_word = hyphenator.inserted(word, hyphen=se.SHY_HYPHEN)
-				result = result + new_word + char
+				result.append(new_word + char)
 			else:
-				result = result + char
+				result.append(char)
 
 			word = ""
 		elif not reading_word or (in_h_tag and ignore_h_tags):
-			result = result + char
+			result.append(char)
 
 	# We need to double-escape backslashes in the replacement string, in case the string contains a backslash+number that the regex engine will misinterpret as a capture group.
-	output_xhtml = regex.sub(r"(<body[^>]*?>).+</body>", r"\1" + result.replace("\\", "\\\\") + "</body>", output_xhtml, flags=regex.DOTALL)
+	output_xhtml = regex.sub(r"(<body[^>]*?>).+</body>", r"\1" + "".join(result).replace("\\", "\\\\") + "</body>", output_xhtml, flags=regex.DOTALL)
 
 	return output_xhtml
 
