@@ -1349,7 +1349,7 @@ def _compatibility_css_additional_replacements(work_compatible_epub_dir: Path) -
 				file.write(processed_css)
 				file.truncate()
 
-def _build_kobo(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path, output_dir: Path, kobo_output_filename: str, last_updated: datetime | None) -> None:
+def _build_kobo(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path, output_dir: Path, kobo_output_filename: str, last_updated: datetime | None, compression_cache: se.epub.EpubCompressionCache) -> None:
 	"""
 	Build the Kobo .kepub file.
 
@@ -1360,6 +1360,7 @@ def _build_kobo(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path, 
 	kobo_output_filename: Name of the Kobo output file.
 	metadata_dom: dom of the metadata file.
 	last_updated: timestamp of the last commit date.
+	compression_cache: Compressed members shared by this ebook's build variants.
 
 	OUTPUTS
 	None.
@@ -1400,7 +1401,7 @@ def _build_kobo(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path, 
 	for file_path in work_kepub_dir.glob("**/*.opf"):
 		se.formatting.format_xml_file(file_path)
 
-	se.epub.write_epub(work_kepub_dir, output_dir / kobo_output_filename, last_updated)
+	se.epub.write_epub(work_kepub_dir, output_dir / kobo_output_filename, last_updated, compression_cache)
 
 # Kobo `.kepub` files need each clause wrapped in a special `<span>` element to enable highlighting.
 # Do this here. Hopefully Kobo will get their act together soon and drop this requirement.
@@ -1822,7 +1823,7 @@ def _run_ace(self: 'SeEpub', work_compatible_epub_dir: Path) -> None:
 		except subprocess.CalledProcessError as ex:
 			raise se.BuildFailedException("[command]ace[/] failed.") from ex
 
-def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path, output_dir: Path, kindle_output_filename: str, toc_filename: str, metadata_dom: EasyXmlTree, compatible_epub_output_filename: str, asin: str, last_updated: datetime | None) -> None:
+def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path, output_dir: Path, kindle_output_filename: str, toc_filename: str, metadata_dom: EasyXmlTree, compatible_epub_output_filename: str, asin: str, last_updated: datetime | None, compression_cache: se.epub.EpubCompressionCache) -> None:
 	"""
 	Build the Kindle .azw3 file.
 
@@ -1836,6 +1837,7 @@ def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path
 	compatible_epub_output_filename: Name of the compatible epub file.
 	asin: The calculated asin of the compatibility epub.
 	last_updated: timestamp of the last commit date.
+	compression_cache: Compressed members shared by this ebook's build variants.
 
 	OUTPUTS
 	None.
@@ -1955,7 +1957,7 @@ def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path
 			core_css_file.write("\n\n" + se.read_utf8(compatibility_css_file))
 
 	# Build an epub file we can send to Calibre.
-	se.epub.write_epub(work_compatible_epub_dir, work_dir / compatible_epub_output_filename, last_updated)
+	se.epub.write_epub(work_compatible_epub_dir, work_dir / compatible_epub_output_filename, last_updated, compression_cache)
 
 	# Generate the Kindle file.
 	cover_path = None
@@ -2055,6 +2057,7 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 	kindle_output_filename = f"{identifier}{".proof" if proof else ""}.azw3"
 	endnote_files_to_be_chunked: list[Path] = []
 	has_sequential_full_page_figures = False
+	compression_cache: se.epub.EpubCompressionCache = {}
 
 	# Create our temp work directory.
 	with tempfile.TemporaryDirectory() as temp_dir:
@@ -2089,7 +2092,7 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 			with open(work_compatible_epub_dir / "epub" / self.metadata_file_path.name, "w", encoding="utf-8") as file:
 				file.write(se.formatting.format_opf(metadata_dom.to_string()))
 
-			se.epub.write_epub(work_compatible_epub_dir, output_dir / advanced_epub_output_filename, last_updated)
+			se.epub.write_epub(work_compatible_epub_dir, output_dir / advanced_epub_output_filename, last_updated, compression_cache)
 
 		# Now add compatibility fixes for older ereaders.
 
@@ -2159,7 +2162,7 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 			file.write(se.formatting.format_opf(metadata_dom.to_string()))
 
 		if build_kobo and not check_only:
-			_build_kobo(self, work_dir, work_compatible_epub_dir, output_dir, kobo_output_filename, last_updated)
+			_build_kobo(self, work_dir, work_compatible_epub_dir, output_dir, kobo_output_filename, last_updated, compression_cache)
 
 		# Now work on more compatibility fixes.
 		current_cache_paths.update(_convert_svgs_to_pngs(self, work_compatible_epub_dir, metadata_dom, build_cache_images_directory))
@@ -2180,7 +2183,7 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 
 		# Write the compatible epub.
 		if not check_only:
-			se.epub.write_epub(work_compatible_epub_dir, output_dir / compatible_epub_output_filename, last_updated)
+			se.epub.write_epub(work_compatible_epub_dir, output_dir / compatible_epub_output_filename, last_updated, compression_cache)
 
 		# Run checks, if specified.
 		if run_epubcheck:
@@ -2204,7 +2207,7 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 			return
 
 		if build_kindle:
-			_build_kindle(self, work_dir, work_compatible_epub_dir, output_dir, kindle_output_filename, toc_filename, metadata_dom, compatible_epub_output_filename, asin, last_updated)
+			_build_kindle(self, work_dir, work_compatible_epub_dir, output_dir, kindle_output_filename, toc_filename, metadata_dom, compatible_epub_output_filename, asin, last_updated, compression_cache)
 
 	# Build is all done!
 	# Since we made heavy changes to the ebook's DOM, flush the DOM cache in case we use this class again.
