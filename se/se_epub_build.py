@@ -976,9 +976,9 @@ def _split_endnote_files(self: 'SeEpub', work_compatible_epub_dir: Path, endnote
 		with open(work_compatible_epub_dir / "epub" / toc_relative_path, "w", encoding="utf-8") as file:
 			file.write(se.formatting.format_xhtml(toc_dom.to_string()))
 
-def __get_svg_rendered_widths(files_with_svg: list[Path], work_compatible_epub_dir: Path) -> dict[Path, int]:
+def __get_svg_rendered_widths(files_with_svg: list[Path], work_compatible_epub_dir: Path, width_cache_path: Path | None = None) -> dict[Path, int]:
 	"""
-	Return the *largest* rendered width of each SVG in the ebook, for a known viewport width.
+	Return the *largest* rendered SVG widths, caching successful width measurements. Widths of rendered SVGs may change given different CSS or fonts, even if the actual SVG contents didn't change.
 	"""
 
 	rendered_widths: dict[Path, int] = {}
@@ -986,15 +986,52 @@ def __get_svg_rendered_widths(files_with_svg: list[Path], work_compatible_epub_d
 	# We import this late because we don't want to load selenium if we're not going to use it.
 	from se.browser import Browser # pylint: disable=import-outside-toplevel
 
-	browser: "Browser|None" = None
+	try:
+		browser = Browser()
+	except se.MissingDependencyException:
+		# If we failed to initialize the browser, don't return any widths, and we'll render SVGs using their native viewbox.
+		se.print_error("Couldn't start [command]chrome[/], [command]chromium[/], or [command]firefox[/] to calculate SVG widths; falling back to viewbox widths.", False, True)
+		return rendered_widths
+
+	cache_key = None
+	environment = None
+	if width_cache_path is not None:
+		try:
+			environment = browser.get_rendering_fingerprint()
+			if environment is not None:
+				digest = sha256(repr((environment, SVG_CANONICAL_VIEWPORT_WIDTH, tuple(path.relative_to(work_compatible_epub_dir).as_posix() for path in files_with_svg))).encode("utf-8"))
+				digest.update(get_file_sha256(Path(__file__)).encode("ascii"))
+				for path in sorted(work_compatible_epub_dir.rglob("*")):
+					if path.is_file():
+						# Remote resources and scripts can change layout without changing the staged files.
+						if path.suffix in (".xhtml", ".css", ".svg") and regex.search(r"<script\b|<\??(?:img|image|link|use|iframe|object|embed|xml-stylesheet)\b[^>]*\b(?:src|href|data)\s*=\s*[\"'](?:https?:|file:|//)|(?:url\(\s*[\"']?|@import\s*[\"'])(?:https?:|file:|//)", path.read_text(encoding="utf-8"), regex.IGNORECASE):
+							break
+						digest.update(path.relative_to(work_compatible_epub_dir).as_posix().encode("utf-8") + b"\0")
+						digest.update(get_file_sha256(path).encode("ascii"))
+				else:
+					cache_key = digest.hexdigest()
+				if cache_key is not None and width_cache_path.is_file():
+					cached = etree.parse(str(width_cache_path), parser=etree.XMLParser(resolve_entities=False, no_network=True)).getroot()
+					if cached.tag == "svg-widths" and cached.get("key") == cache_key:
+						widths: dict[Path, int] = {}
+						svg_paths = {path.resolve() for path in work_compatible_epub_dir.rglob("*.svg")}
+						for node in cached:
+							path = Path(node.get("path", ""))
+							width = int(node.get("width", "0"))
+							svg_path = (work_compatible_epub_dir / path).resolve()
+							if node.tag != "svg" or path.is_absolute() or ".." in path.parts or width <= 0 or svg_path not in svg_paths or svg_path in widths:
+								break
+							widths[svg_path] = width
+						else:
+							if widths:
+								return widths
+		except (OSError, ValueError, TypeError, etree.XMLSyntaxError):
+			# Invalid cache entries and unreadable inputs fall back to live measurement.
+			pass
+
+	complete = True
 	browser_temp_directory_stack = ExitStack()
 	try:
-		try:
-			browser = Browser()
-		except se.MissingDependencyException:
-			# If we failed to initialize the browser, don't return any widths, and we'll render SVGs using their native viewbox.
-			se.print_error("Couldn't start [command]chrome[/], [command]chromium[/], or [command]firefox[/] to calculate SVG widths; falling back to viewbox widths.", False, True)
-			return rendered_widths
 
 		# Set the viewport width.
 		viewport_width = SVG_CANONICAL_VIEWPORT_WIDTH
@@ -1007,6 +1044,8 @@ def __get_svg_rendered_widths(files_with_svg: list[Path], work_compatible_epub_d
 				break
 
 			browser.driver.set_window_size(viewport_width + (viewport_width - inner_width), 1000) # pyright: ignore[reportUnknownMemberType] Broken Selenium type hint here.
+		else:
+			complete = False
 
 		# If the browser is sandboxed, we need to copy the work epub into its special temp directory so that it can render the files.
 		browser_epub_directory = work_compatible_epub_dir
@@ -1035,6 +1074,7 @@ def __get_svg_rendered_widths(files_with_svg: list[Path], work_compatible_epub_d
 				width = measurement.get("width", 0)
 
 				if not isinstance(src, str) or not isinstance(width, int) or width <= 0:
+					complete = False
 					continue
 
 				src = urllib.parse.unquote(regex.sub(r"#.*$", "", src))
@@ -1049,6 +1089,19 @@ def __get_svg_rendered_widths(files_with_svg: list[Path], work_compatible_epub_d
 			pass
 
 		browser_temp_directory_stack.close()
+
+	# Store only successful measurements, using relative paths and an atomic replacement.
+	if complete and rendered_widths and cache_key is not None and width_cache_path is not None and environment == browser.get_rendering_fingerprint():
+		try:
+			cached = etree.Element("svg-widths", key=cache_key)
+			for path, width in sorted(rendered_widths.items()):
+				etree.SubElement(cached, "svg", path=path.relative_to(work_compatible_epub_dir.resolve()).as_posix(), width=str(width))
+			with tempfile.TemporaryDirectory(dir=width_cache_path.parent) as directory:
+				cache_file = Path(directory) / "svg-widths.xml"
+				cache_file.write_bytes(etree.tostring(cached, encoding="utf-8", xml_declaration=True, pretty_print=True))
+				cache_file.replace(width_cache_path)
+		except (OSError, ValueError):
+			pass
 
 	return rendered_widths
 
@@ -1080,7 +1133,10 @@ def _convert_svgs_to_pngs(self: 'SeEpub', work_compatible_epub_dir: Path, metada
 	# Only get rendered widths if this is an SE ebook, and we have SVGs in the ebook that are not `titlepage.svg` or `logo.svg`.
 	# `titlepage.svg` will get rendered at its native viewport width; `logo.svg` will be replaced by a prerendered PNG from our data files, instead of rendering live.
 	if svg_file_paths and has_convertible_svgs:
-		svg_rendered_widths = __get_svg_rendered_widths(files_with_measurable_svg, work_compatible_epub_dir)
+		width_cache_path = None
+		if build_cache_images_directory:
+			width_cache_path = build_cache_images_directory.parent / "svg-widths.xml"
+		svg_rendered_widths = __get_svg_rendered_widths(files_with_measurable_svg, work_compatible_epub_dir, width_cache_path)
 
 	# Prep for SVG to PNG conversion. First, remove SVG item properties in the metadata file.
 	for node in metadata_dom.xpath("/package/manifest/item[contains(@properties, 'svg')]"):

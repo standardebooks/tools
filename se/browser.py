@@ -5,13 +5,20 @@ Defines functions for interacting with headless browser sessions.
 
 import atexit
 from contextlib import ExitStack
+import ctypes
 from enum import Enum
+from hashlib import file_digest, sha256
 import os
 from pathlib import Path
+import platform
+import shutil
+import subprocess
+import sys
 import tempfile
+from typing import cast
 
 import installed_browsers
-from selenium import webdriver
+from selenium import __version__ as selenium_version, webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
@@ -91,6 +98,7 @@ class Browser:
 		self.type: BrowserType
 		self.installation_type: InstallationType
 		self.executable_path: Path
+		self.version = ""
 		self._driver: WebDriver | None = None
 
 		try:
@@ -101,6 +109,7 @@ class Browser:
 					self.type = browser_type
 					self.installation_type = InstallationType.NATIVE
 					self.executable_path = Path(installed_browser_location)
+					self.version = installed_browser.get("version", "")
 
 					# `installed_browsers.browsers()` doesn't identify browsers installed via Flatpak, but in case it does on some platforms, check that here.
 					if "org.mozilla.firefox" in installed_browser_location or "org.chromium.Chromium" in installed_browser_location:
@@ -144,6 +153,101 @@ class Browser:
 			raise se.MissingDependencyException(f"Couldn’t find web browser. Message: {ex}")
 
 		raise se.MissingDependencyException("Couldn’t find [command]chrome[/], [command]chromium[/], or [command]firefox[/].")
+
+	def get_rendering_fingerprint(self) -> str | None:
+		"""
+		Fingerprint a native macOS or Linux browser and its fonts without starting a webdriver.
+		"""
+
+		if not (sys.platform.startswith("linux") or sys.platform == "darwin") or self.installation_type != InstallationType.NATIVE or not self.version:
+			return None
+
+		try:
+			executable = Path(shutil.which(str(self.executable_path)) or self.executable_path).resolve(strict=True)
+			# Generic launcher directories do not identify a complete browser installation.
+			if executable.parent in (Path("/bin"), Path("/usr/bin"), Path("/usr/local/bin")):
+				return None
+			paths: set[Path] = set()
+			installation = executable.parent
+			if sys.platform == "darwin":
+				# Include frameworks, resources, and policies throughout the browser's app bundle.
+				for directory in (executable, *executable.parents):
+					if directory.suffix == ".app":
+						installation = directory
+						break
+				else:
+					raise ValueError("Browser executable is not inside an app bundle.")
+
+				# Core Text enumerates available font files, including fonts outside standard directories.
+				core_text = ctypes.CDLL("/System/Library/Frameworks/CoreText.framework/CoreText")
+				foundation = ctypes.CDLL("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")
+				core_text.CTFontManagerCopyAvailableFontURLs.argtypes = []
+				core_text.CTFontManagerCopyAvailableFontURLs.restype = ctypes.c_void_p
+				foundation.CFArrayGetCount.argtypes = [ctypes.c_void_p]
+				foundation.CFArrayGetCount.restype = ctypes.c_long
+				foundation.CFArrayGetValueAtIndex.argtypes = [ctypes.c_void_p, ctypes.c_long]
+				foundation.CFArrayGetValueAtIndex.restype = ctypes.c_void_p
+				foundation.CFURLGetFileSystemRepresentation.argtypes = [ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p, ctypes.c_long]
+				foundation.CFURLGetFileSystemRepresentation.restype = ctypes.c_bool
+				foundation.CFRelease.argtypes = [ctypes.c_void_p]
+				foundation.CFRelease.restype = None
+				font_urls = cast(int | None, core_text.CTFontManagerCopyAvailableFontURLs())
+				if not font_urls:
+					raise ValueError("Core Text returned no font URL array.")
+				try:
+					count = cast(int, foundation.CFArrayGetCount(font_urls))
+					if count <= 0:
+						raise ValueError("Core Text returned no available fonts.")
+					buffer = ctypes.create_string_buffer(os.pathconf("/", "PC_PATH_MAX") + 1)
+					for index in range(count):
+						url = cast(int | None, foundation.CFArrayGetValueAtIndex(font_urls, index))
+						if not url or not foundation.CFURLGetFileSystemRepresentation(url, True, buffer, len(buffer)):
+							raise ValueError("Could not resolve a Core Text font URL.")
+						paths.add(Path(os.fsdecode(buffer.value)))
+				finally:
+					foundation.CFRelease(font_urls)
+
+				packages = subprocess.run(["sw_vers"], check=True, capture_output=True)
+				font_config = subprocess.run(["defaults", "export", "NSGlobalDomain", "-"], check=True, capture_output=True, text=True)
+				for directory in (Path("/Library/Preferences"), Path.home() / "Library/Preferences", Path("/Library/Managed Preferences"), Path.home() / "Library/Managed Preferences"):
+					for name in ("org.mozilla.firefox.plist", "com.google.Chrome.plist", "org.chromium.Chromium.plist"):
+						if (directory / name).is_file():
+							paths.add(directory / name)
+			else:
+				fonts = subprocess.run(["fc-list", "--format=%{file}\n"], check=True, capture_output=True, text=True)
+				font_config = subprocess.run(["fc-conflist"], check=True, capture_output=True, text=True)
+				paths.update(Path(path) for path in fonts.stdout.splitlines() if path)
+				paths.update(Path(line.partition(":")[0].lstrip("+- ")) for line in font_config.stdout.splitlines() if line)
+				for command in (
+					["dpkg-query", "--show", "--showformat=${Package}=${Version}\n"],
+					["rpm", "--query", "--all", "--queryformat=%{NAME}=%{VERSION}-%{RELEASE}.%{ARCH}\n"],
+					["pacman", "--query"],
+					["apk", "info", "--verbose"],
+				):
+					if shutil.which(command[0]):
+						packages = subprocess.run(command, check=True, capture_output=True)
+						break
+				else:
+					raise ValueError("No supported package database is available.")
+				for directory in (Path("/etc/firefox"), Path("/etc/chromium"), Path("/etc/opt/chrome")):
+					paths.update(path for path in directory.rglob("*") if path.is_file())
+			paths.update(path for path in installation.rglob("*") if path.is_file())
+			paths.add(Path(__file__))
+
+			# Include settings that can change font selection, scaling, or browser rendering.
+			environment = {name: value for name, value in os.environ.items() if name.startswith(("FONTCONFIG_", "LC_", "XDG_", "GDK_", "GTK_", "QT_", "MOZ_")) and name not in ("XDG_CACHE_HOME", "XDG_RUNTIME_DIR")}
+			environment.update({name: os.environ.get(name, "") for name in ("HOME", "LANG", "FREETYPE_PROPERTIES")})
+			digest = sha256(repr((self.type.name, self.version, str(executable), platform.platform(), sys.version, selenium_version, tuple(sorted(environment.items())))).encode("utf-8"))
+			digest.update(b"\n".join(sorted(packages.stdout.splitlines())))
+			digest.update(font_config.stdout.encode("utf-8"))
+			for path in sorted(paths):
+				digest.update(str(path).encode("utf-8") + b"\0")
+				with path.open("rb") as file:
+					digest.update(file_digest(file, "sha256").digest())
+			return digest.hexdigest()
+		except (OSError, ValueError, AttributeError, subprocess.CalledProcessError):
+			# Unsupported installations and unavailable fingerprint inputs retain live measurement.
+			return None
 
 	@property
 	def driver(self) -> WebDriver:
