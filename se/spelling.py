@@ -482,7 +482,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Rr])eë", r"\1ee", xhtml)				# reë -> ree (as in reëvaluate)
 	xhtml = regex.sub(r"\b(?<!ancien )([Rr])égime", r"\1egime", xhtml)		# régime -> regime (but "ancien régime")
 	xhtml = regex.sub(r"\b([Rr])ôle(s?)\b", r"\1ole\2", xhtml)			# rôle -> role
-	xhtml = regex.sub(r"([S])uède", r"\1uede", xhtml)				# suède -> suede
+	xhtml = regex.sub(r"([Ss])u[èé]de", r"\1uede", xhtml)				# suède -> suede
 	xhtml = regex.sub(r"\b([Tt])able(s?) d’hote\b", r"\1able\2 d’hôte", xhtml)	# table d'hote -> table d'hôte
 
 
