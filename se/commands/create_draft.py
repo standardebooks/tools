@@ -759,8 +759,8 @@ def _create_draft(args: Namespace, plain_output: bool):
 						transcription_producers[key] = "Distributed Proofreaders"
 
 				# Add transcribers to metadata.
-				# First remove all placeholder metatata.
-				for node in epub.metadata_dom.xpath("//dc:contributor[starts-with(@id, 'transcriber-')] | //meta[starts-with(@refines, '#transcriber-')]"):
+				# First remove all placeholder metadata, including transcriber links.
+				for node in epub.metadata_dom.xpath("//dc:contributor[starts-with(@id, 'transcriber-')] | //*[starts-with(@refines, '#transcriber-')]"):
 					node.remove()
 
 				i = 1
