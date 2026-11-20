@@ -1000,7 +1000,6 @@ def __get_svg_rendered_widths(files_with_svg: list[Path], work_compatible_epub_d
 			environment = browser.get_rendering_fingerprint()
 			if environment is not None:
 				digest = sha256(repr((environment, SVG_CANONICAL_VIEWPORT_WIDTH, tuple(path.relative_to(work_compatible_epub_dir).as_posix() for path in files_with_svg))).encode("utf-8"))
-				digest.update(get_file_sha256(Path(__file__)).encode("ascii"))
 				for path in sorted(work_compatible_epub_dir.rglob("*")):
 					if path.is_file():
 						# Remote resources and scripts can change layout without changing the staged files.
