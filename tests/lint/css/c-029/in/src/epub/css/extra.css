@@ -1,0 +1,29 @@
+@charset "utf-8";
+
+/* Ignore :before in comments and strings. */
+p[title=":after"]::before,
+p::after,
+p:first-child{
+	content: ":first-line";
+}
+
+p:before,
+p:after,
+p:first-letter,
+p:first-line,
+p:marker,
+p:not(:before){
+	font-style: italic;
+}
+
+@supports selector(p:first-line){
+	p:first-line{
+		font-style: italic;
+	}
+}
+
+@supports selector(p::first-line){
+	p::first-line{
+		font-style: italic;
+	}
+}

@@ -1,0 +1,9 @@
+c-029 [Error] extra.css CSS pseudo-element prefixed with only one `:`.
+ Line 10:       `:before`
+ Line 11:       `:after`
+ Line 12:       `:first-letter`
+ Line 13:       `:first-line`
+ Line 14:       `:marker`
+ Line 15:       `:before`
+ Line 19:       `:first-line`
+ Line 20:       `:first-line`

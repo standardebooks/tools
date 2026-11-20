@@ -170,6 +170,7 @@ CSS
 "c-026", "Table that appears to be listing numbers, but without [css]font-variant-numeric: tabular-nums;[/]."
 "c-027", "Illegal [css-property]font-size[/] below [val]1[/]."
 "c-028", "Illegal CSS selector. [hint]Hint: Place exotic CSS selectors inside [css]@supports selector()[/] blocks and ensure rendering is acceptable when that CSS is inactive.[/hint]"
+"c-029", "CSS pseudo-element prefixed with only one [css-selector]:[/]."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -1547,7 +1548,7 @@ def css_pseudo_selectors(tokens: list[Node]) -> list[tuple[str, int]]:
 	selectors: list[tuple[str, int]] = []
 	tokens = [token for token in tokens if not isinstance(token, Comment)]
 	index = 0
-	
+
 	while index < len(tokens):
 		token = tokens[index]
 
@@ -1556,24 +1557,24 @@ def css_pseudo_selectors(tokens: list[Node]) -> list[tuple[str, int]]:
 			line = cast(int, getattr(token, "source_line"))
 			index += 1
 			next_token = tokens[index] if index < len(tokens) else None
-			
+
 			if isinstance(next_token, LiteralToken) and next_token.value == ":":
 				prefix += ":"
 				index += 1
-			
+
 			if index < len(tokens) and isinstance(tokens[index], (IdentToken, FunctionBlock)):
 				selector = tokens[index]
-				
+
 				if isinstance(selector, IdentToken):
 					selectors.append((prefix + selector.lower_value, line))
 				elif isinstance(selector, FunctionBlock):
 					selectors.append((prefix + selector.name.lower(), line))
 
 		current_token = tokens[index] if index < len(tokens) else None
-		
+
 		if isinstance(current_token, FunctionBlock):
 			selectors.extend(css_pseudo_selectors(current_token.arguments))
-		
+
 		index += 1
 
 	return selectors
@@ -1626,7 +1627,18 @@ def lint_css_whitelist(source_file: SourceFile, allowed_properties: dict[str, tu
 
 	submessages: list[LintSubmessage] = []
 	selector_submessages: list[LintSubmessage] = []
+	pseudo_element_submessages: list[LintSubmessage] = []
+	# Pseudo-elements require two colons even when legacy single-colon syntax is supported.
+	pseudo_elements = {
+		"after", "backdrop", "before", "checkmark", "column", "cue", "cue-region", "details-content",
+		"file-selector-button", "first-letter", "first-line", "grammar-error", "highlight", "marker",
+		"part", "picker", "picker-icon", "placeholder", "scroll-button", "scroll-marker", "scroll-marker-group",
+		"search-text", "selection", "slotted", "spelling-error", "target-text", "view-transition",
+		"view-transition-group", "view-transition-group-children", "view-transition-image-pair",
+		"view-transition-new", "view-transition-old",
+	}
 	pending: list[tuple[list[Node], set[tuple[str, str]], set[tuple[str, str]]]] = [(tinycss2.parser.parse_stylesheet(source_file.contents, skip_comments=True, skip_whitespace=True), set(), set())]
+
 	while pending:
 		rules, supported, supported_selectors = pending.pop()
 
@@ -1639,9 +1651,11 @@ def lint_css_whitelist(source_file: SourceFile, allowed_properties: dict[str, tu
 					guard = supported | css_supports_features(rule.prelude)
 					selector_guard = supported_selectors | css_supports_features(rule.prelude, selector_tests=True)
 
-				if isinstance(rule, QualifiedRule):
+				if isinstance(rule, QualifiedRule) or rule.lower_at_keyword == "supports":
 					for selector, line in css_pseudo_selectors(rule.prelude):
-						if selector not in allowed_selectors and (selector, "") not in supported_selectors:
+						if selector.startswith(":") and not selector.startswith("::") and selector[1:] in pseudo_elements:
+							pseudo_element_submessages.append(LintSubmessage(f"[css-selector]{escape(selector)}[/]", line))
+						elif isinstance(rule, QualifiedRule) and selector not in allowed_selectors and (selector, "") not in supported_selectors:
 							selector_submessages.append(LintSubmessage(f"[css-selector]{escape(selector)}[/]", line))
 
 				pending.append((tinycss2.parser.parse_blocks_contents(rule.content, skip_comments=True, skip_whitespace=True), guard, selector_guard))
@@ -1673,10 +1687,15 @@ def lint_css_whitelist(source_file: SourceFile, allowed_properties: dict[str, tu
 					submessages.append(LintSubmessage(text, cast(int, getattr(rule, "source_line"))))
 
 	messages: list[LintMessage] = []
+
 	if submessages:
 		messages.append(LintMessage("c-007", "Illegal CSS property. [hint]Hint: Place exotic CSS properties inside [css]@supports()[/] blocks and ensure rendering is acceptable when that CSS is inactive.[/hint]", se.MESSAGE_TYPE_ERROR, source_file.filename, sorted(submessages, key=lambda item: item.line_num or 0)))
+
 	if selector_submessages:
 		messages.append(LintMessage("c-028", "Illegal CSS selector. [hint]Hint: Place exotic CSS selectors inside [css]@supports selector()[/] blocks and ensure rendering is acceptable when that CSS is inactive.[/hint]", se.MESSAGE_TYPE_ERROR, source_file.filename, sorted(selector_submessages, key=lambda item: item.line_num or 0)))
+
+	if pseudo_element_submessages:
+		messages.append(LintMessage("c-029", "CSS pseudo-element prefixed with only one [css-selector]:[/].", se.MESSAGE_TYPE_ERROR, source_file.filename, sorted(pseudo_element_submessages, key=lambda item: item.line_num or 0)))
 
 	return messages
 
