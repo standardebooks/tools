@@ -4263,7 +4263,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 	# For example, `align-self` can work within a `@supports(display: flex)` block without having to *also* test for `align-self`.
 	# A requirement without a value, like `column-count`, accepts any value tested by the guard.
 	# Values is a comma-separated list of allowed values, for example allow `display: block` and `display: inline` but disallow `display: flex`.
-	with importlib.resources.files("se.data").joinpath("allowed_css.csv").open("r", encoding="utf-8") as whitelist:
+	with importlib.resources.files("se.data").joinpath("allowed_css_properties.csv").open("r", encoding="utf-8") as whitelist:
 		allowed_css_properties = {row["Property"]: (row["Requires"], {value.strip().lower() for value in row["Values"].split(",") if value.strip()}) for row in csv.DictReader(whitelist)}
 
 	# Now iterate over individual files for some checks.
