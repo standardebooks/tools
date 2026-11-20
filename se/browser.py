@@ -17,7 +17,6 @@ import sys
 import tempfile
 from typing import cast
 
-import installed_browsers
 from selenium import __version__ as selenium_version, webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -28,6 +27,8 @@ from selenium.webdriver.safari.options import Options as SafariOptions
 from selenium.webdriver.remote.webdriver import WebDriver
 
 import se
+# Vendor installed_browsers because we need unreleased master fixes and PyPI rejects Git URL dependencies.
+from se.vendor import installed_browsers
 
 # Storing temp directories in this list keeps them existant across function calls; when the script ends, they'll be automatically cleaned up.
 _TEMP_DIRECTORY_STACK = ExitStack()

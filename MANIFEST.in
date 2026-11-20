@@ -2,3 +2,6 @@ recursive-include se/data *
 recursive-include se/completions *
 recursive-include se/vendor/calibre_azw3/resources *
 recursive-include se/vendor/calibre_azw3/upstream *
+include se/vendor/installed_browsers/LICENSE
+include se/vendor/installed_browsers/README.txt
+recursive-include se/vendor/installed_browsers *.pyi

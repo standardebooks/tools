@@ -89,14 +89,15 @@ setup(
 		"cssutils==2.15.0",
 		"ftfy==6.3.1",
 		"gitpython==3.2.1",
-		# `installed_browsers` has compatiblity changes in their master branch, which has not been published yet. At the time of writing the latest release is 0.1.5.
-		"installed_browsers @ git+https://github.com/undeflorate/installed_browsers.git@c4343160662be716d211d0ef3989328352fd4106",
 		"lxml==6.1.1",
 		"natsort==8.4.0",
 		"pillow==13.0.0",
 		"psutil==7.2.2",
 		"pygments==2.21.0",
 		"pyphen==0.17.2",
+		# Vendored installed_browsers requires `pywin32` on Windows and `pyxdg` on Linux.
+		"pywin32>=303,<313; sys_platform == 'win32'",
+		"pyxdg>=0.27,<0.29; sys_platform == 'linux'",
 		"oxipng-pybind==10.1.1.post2",
 		"regex==2026.6.28",
 		"repro_zipfile==0.4.1",

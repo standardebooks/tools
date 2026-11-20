@@ -15,7 +15,6 @@ from git import cmd
 from natsort import natsorted
 from PIL import Image, ImageChops
 from PIL.Image import Image as Image_type
-from selenium.common.exceptions import WebDriverException
 
 import se
 from se.se_help_formatter import SeHelpFormatter
@@ -58,11 +57,8 @@ def _screenshot_html_element(browser: 'Browser', filename: Path, output_path: Pa
 		_screenshot_chrome_full_page(browser, output_path)
 
 	elif browser.type == BrowserType.FIREFOX:
-		try:
-			browser.driver.find_element("tag name", "html").screenshot(str(output_path)) # pyright: ignore Broken Selenium type hint here.
-		except WebDriverException:
-			# Firefox might throw an exception of the viewport is too large. In that case, fall back to a special function to stich to together viewport-sized screenshots.
-			_screenshot_firefox_full_page(browser, output_path)
+		# Firefox can silently capture only the visible part of a large element, so stitch viewport screenshots to include the entire page.
+		_screenshot_firefox_full_page(browser, output_path)
 
 	else:
 		raise se.MissingDependencyException("Couldn't initialize default web browser.")
