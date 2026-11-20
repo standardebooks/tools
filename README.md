@@ -193,7 +193,7 @@ We export `COLUMNS` because `se lint` needs to know the width of the terminal so
 Before we can use `pylint` or `pyright` on the toolset source, we have to inject them (and additional typings) into the venv `pipx` created for the `standardebooks` package:
 
 ```shell
-pipx inject standardebooks pylint==4.0.6 pyright==1.1.411 types-Pygments==2.21.0.20260819 types-requests==2.33.0.20260518 types-setuptools==82.0.0.20260518 types-lxml==2026.2.16
+pipx inject standardebooks pylint==4.1.4 pyright==1.1.414 types-Pygments==2.21.0.20261115 types-requests==2.33.0.20261030 types-setuptools==84.2.0.20261104 types-lxml==2026.2.16
 ```
 
 Then make sure to call the `pylint` and `pyright` binaries that `pipx` installed in the `standardebooks` venv, *not* any other globally-installed binaries:

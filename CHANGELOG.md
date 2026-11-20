@@ -1,3 +1,103 @@
+# 4.1.1
+
+## General
+
+- Gracefully fail when not able to initialize an ebook object
+
+- Catch errors related to invalid UTF8 inputs and output nice error messages
+
+## se build
+
+- Bump VNU to latest
+
+- Colorize output of `se build --check`
+
+- Support EPUB CFI links and simplify them for compatible build
+
+- When large endnote files are chunked, preserve any `@property="svg"` entry in the spine item for the new chunk
+
+- Fix Windows not finding Cairo
+
+- Cache zip progress to improve performance
+
+- Cache rendered SVG widths to improve performance
+
+- Improve azw3 generation speed
+
+## se clean
+
+- Escape `@href` attributes
+
+## se create-draft
+
+- Recognize new Faded Page page shape
+
+- Correctly remove all metadata placeholders before creating `content.opf`
+
+## se hyphenate
+
+- Performance optimizations
+
+## se interactive-replace
+
+- Add `curses` package for Windows
+
+## se lint
+
+- Inspect href attribute for m-036 variables. Thanks to Andrew Paseltiner
+
+- Improve t-015
+
+- Fix typo in m-016 message
+
+- Check validitiy of EPUB CFI links
+
+- Add m-097, illegal `xml:lang` attribute on `alternate-script` `<meta>` property
+
+- Add m-098, contributor without MARC role
+
+- Add m-099 and m-100, contributor with multiple NACOAF/Wikipedia URLs
+
+- Add m-101, `@refines` that doesn't start with `#`
+
+- Add m-102, illegal family suffix formatting
+
+- Add m-103, illegal honorific in contributor name
+
+- Add x-025, unescaped characters in URL
+
+- Add m-105, contributor missing `file-as`
+
+- Add m-106, `<meta>` refines an ID outside of its contributor block
+
+- Add m-107, mismatched links in metadata/colophon
+
+- Add m-108, `schema:sameAs` URL points to invalid location
+
+- Add x-024, illegal character in `@id`
+
+- Add m-109, non-canonical GitHub URL
+
+- Merge various errors into m-071
+
+- Add c-007, illegal CSS property
+
+- Add c-028, illegal CSS selector
+
+- Add c-029, CSS pseudo-element prefixed with only one `:`
+
+## se modernize-spelling
+
+- Various additions
+
+- Remove duplicate. Thanks to Naglis Jonaitis
+
+- Allow comments in the words file
+
+## se typogrify
+
+- Add en dashes between date ranges
+
 # 4.1.0
 
 ## General
