@@ -1,0 +1,16 @@
+Selector
+::after
+::before
+:empty
+:first-child
+:first-of-type
+:has
+:last-child
+:last-of-type
+:not
+:nth-child
+:nth-last-child
+:nth-last-of-type
+:nth-of-type
+:only-child
+:only-of-type

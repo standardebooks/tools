@@ -24,7 +24,7 @@ from PIL import Image, UnidentifiedImageError
 import regex
 import tinycss2.parser
 import tinycss2.serializer
-from tinycss2.ast import AtRule, Comment, Declaration, IdentToken, Node, ParenthesesBlock, QualifiedRule, WhitespaceToken
+from tinycss2.ast import AtRule, Comment, Declaration, FunctionBlock, IdentToken, LiteralToken, Node, ParenthesesBlock, QualifiedRule, WhitespaceToken
 from rich.markup import escape
 from natsort import natsorted, ns
 from lxml import etree
@@ -169,6 +169,7 @@ CSS
 "c-025", "Illegal percent unit used to set [css-property]height[/] or positioning property. [hint]Hint: Use [val]vh[/] to specify vertical-oriented properties like [css-property]height[/] or [css-property]position[/].[/hint]"
 "c-026", "Table that appears to be listing numbers, but without [css]font-variant-numeric: tabular-nums;[/]."
 "c-027", "Illegal [css-property]font-size[/] below [val]1[/]."
+"c-028", "Illegal CSS selector. [hint]Hint: Place exotic CSS selectors inside [css]@supports selector()[/] blocks and ensure rendering is acceptable when that CSS is inactive.[/hint]"
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -1538,12 +1539,53 @@ def files_not_in_spine(self: 'SeEpub') -> set[Path]:
 	spine_files = set(self.spine_file_paths + [self.toc_path])
 	return xhtml_files.difference(spine_files)
 
-def css_supports_properties(tokens: list[Node]) -> set[tuple[str, str]]:
-	"""Return property tests guaranteed to succeed by a supports condition."""
+def css_pseudo_selectors(tokens: list[Node]) -> list[tuple[str, int]]:
+	"""
+	Return pseudo selectors and their line numbers, including those inside selector functions.
+	"""
+
+	selectors: list[tuple[str, int]] = []
+	tokens = [token for token in tokens if not isinstance(token, Comment)]
+	index = 0
+	
+	while index < len(tokens):
+		token = tokens[index]
+
+		if isinstance(token, LiteralToken) and token.value == ":":
+			prefix = ":"
+			line = cast(int, getattr(token, "source_line"))
+			index += 1
+			next_token = tokens[index] if index < len(tokens) else None
+			
+			if isinstance(next_token, LiteralToken) and next_token.value == ":":
+				prefix += ":"
+				index += 1
+			
+			if index < len(tokens) and isinstance(tokens[index], (IdentToken, FunctionBlock)):
+				selector = tokens[index]
+				
+				if isinstance(selector, IdentToken):
+					selectors.append((prefix + selector.lower_value, line))
+				elif isinstance(selector, FunctionBlock):
+					selectors.append((prefix + selector.name.lower(), line))
+
+		current_token = tokens[index] if index < len(tokens) else None
+		
+		if isinstance(current_token, FunctionBlock):
+			selectors.extend(css_pseudo_selectors(current_token.arguments))
+		
+		index += 1
+
+	return selectors
+
+def css_supports_features(tokens: list[Node], selector_tests: bool = False) -> set[tuple[str, str]]:
+	"""
+	Return property or pseudo selector tests guaranteed to succeed by a supports condition.
+	"""
 
 	tokens = [token for token in tokens if not isinstance(token, (WhitespaceToken, Comment))]
 	if not tokens or isinstance(tokens[0], IdentToken):
-		# Negated tests do not establish support for a property.
+		# Negated tests do not establish support for a feature.
 		return set()
 
 	tests: list[set[tuple[str, str]]] = []
@@ -1559,40 +1601,50 @@ def css_supports_properties(tokens: list[Node]) -> set[tuple[str, str]]:
 
 			if isinstance(token, ParenthesesBlock):
 				declaration = tinycss2.parser.parse_one_declaration(token.content, skip_comments=True)
-				if isinstance(declaration, Declaration):
+				if isinstance(declaration, Declaration) and not selector_tests:
 					# The CSV requirements use case-insensitive keyword values.
 					value = tinycss2.serializer.serialize([item for item in declaration.value if not isinstance(item, (WhitespaceToken, Comment))]).lower()
 					properties.add((declaration.lower_name, value))
 					properties.add((declaration.lower_name, ""))
 				else:
-					properties = css_supports_properties(token.content)
+					properties = css_supports_features(token.content, selector_tests)
+			elif selector_tests and isinstance(token, FunctionBlock) and token.name.lower() == "selector":
+				properties = {(selector, "") for selector, _ in css_pseudo_selectors(token.arguments)}
 			tests.append(properties)
 
 	if len(operators) != len(tests) - 1 or len(set(operators)) > 1:
 		return set()
 
 	if "or" in operators:
-		# Every alternative must guarantee a property before its use is allowed.
+		# Every alternative must guarantee a feature before its use is allowed.
 		return tests[0].intersection(*tests[1:])
 
 	return tests[0].union(*tests[1:])
 
-def lint_css_whitelist(source_file: SourceFile, allowed_properties: dict[str, tuple[str, set[str]]]) -> list[LintMessage]:
-	"""Check for invalid CSS properties."""
+def lint_css_whitelist(source_file: SourceFile, allowed_properties: dict[str, tuple[str, set[str]]], allowed_selectors: set[str]) -> list[LintMessage]:
+	"""Check for invalid CSS properties and pseudo selectors."""
 
 	submessages: list[LintSubmessage] = []
-	pending: list[tuple[list[Node], set[tuple[str, str]]]] = [(tinycss2.parser.parse_stylesheet(source_file.contents, skip_comments=True, skip_whitespace=True), set())]
+	selector_submessages: list[LintSubmessage] = []
+	pending: list[tuple[list[Node], set[tuple[str, str]], set[tuple[str, str]]]] = [(tinycss2.parser.parse_stylesheet(source_file.contents, skip_comments=True, skip_whitespace=True), set(), set())]
 	while pending:
-		rules, supported = pending.pop()
+		rules, supported, supported_selectors = pending.pop()
 
 		for rule in rules:
 			if isinstance(rule, (AtRule, QualifiedRule)) and rule.content is not None:
 				guard = supported
+				selector_guard = supported_selectors
 				# Carry guards into child blocks without exposing them to sibling rules.
 				if isinstance(rule, AtRule) and rule.lower_at_keyword == "supports":
-					guard = supported | css_supports_properties(rule.prelude)
+					guard = supported | css_supports_features(rule.prelude)
+					selector_guard = supported_selectors | css_supports_features(rule.prelude, selector_tests=True)
 
-				pending.append((tinycss2.parser.parse_blocks_contents(rule.content, skip_comments=True, skip_whitespace=True), guard))
+				if isinstance(rule, QualifiedRule):
+					for selector, line in css_pseudo_selectors(rule.prelude):
+						if selector not in allowed_selectors and (selector, "") not in supported_selectors:
+							selector_submessages.append(LintSubmessage(f"[css-selector]{escape(selector)}[/]", line))
+
+				pending.append((tinycss2.parser.parse_blocks_contents(rule.content, skip_comments=True, skip_whitespace=True), guard, selector_guard))
 
 			elif isinstance(rule, Declaration):
 				approval = allowed_properties.get(rule.lower_name)
@@ -1620,10 +1672,13 @@ def lint_css_whitelist(source_file: SourceFile, allowed_properties: dict[str, tu
 
 					submessages.append(LintSubmessage(text, cast(int, getattr(rule, "source_line"))))
 
+	messages: list[LintMessage] = []
 	if submessages:
-		return [LintMessage("c-007", "Illegal CSS property. [hint]Hint: Place exotic CSS properties inside [css]@supports()[/] blocks and ensure rendering is acceptable when that CSS is inactive.[/hint]", se.MESSAGE_TYPE_ERROR, source_file.filename, sorted(submessages, key=lambda item: item.line_num or 0))]
+		messages.append(LintMessage("c-007", "Illegal CSS property. [hint]Hint: Place exotic CSS properties inside [css]@supports()[/] blocks and ensure rendering is acceptable when that CSS is inactive.[/hint]", se.MESSAGE_TYPE_ERROR, source_file.filename, sorted(submessages, key=lambda item: item.line_num or 0)))
+	if selector_submessages:
+		messages.append(LintMessage("c-028", "Illegal CSS selector. [hint]Hint: Place exotic CSS selectors inside [css]@supports selector()[/] blocks and ensure rendering is acceptable when that CSS is inactive.[/hint]", se.MESSAGE_TYPE_ERROR, source_file.filename, sorted(selector_submessages, key=lambda item: item.line_num or 0)))
 
-	return []
+	return messages
 
 def _lint_css_checks(self: 'SeEpub', local_css_path: Path, abbr_with_whitespace: list[str]) -> list[LintMessage]:
 	"""
@@ -4265,6 +4320,8 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 	# Values is a comma-separated list of allowed values, for example allow `display: block` and `display: inline` but disallow `display: flex`.
 	with importlib.resources.files("se.data").joinpath("allowed_css_properties.csv").open("r", encoding="utf-8") as whitelist:
 		allowed_css_properties = {row["Property"]: (row["Requires"], {value.strip().lower() for value in row["Values"].split(",") if value.strip()}) for row in csv.DictReader(whitelist)}
+	with importlib.resources.files("se.data").joinpath("allowed_css_pseudo_selectors.csv").open("r", encoding="utf-8") as whitelist:
+		allowed_css_pseudo_selectors = {row["Selector"] for row in csv.DictReader(whitelist)}
 
 	# Now iterate over individual files for some checks.
 	# We use `os.walk()` and not `Path.glob()` so that we can ignore `.git` and its children.
@@ -4310,7 +4367,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 				continue
 
 			if file_path.suffix == ".css" and not (self.is_se_ebook and file_path.name in ("core.css", "se.css")):
-				messages += lint_css_whitelist(source_file, allowed_css_properties)
+				messages += lint_css_whitelist(source_file, allowed_css_properties, allowed_css_pseudo_selectors)
 
 			if file_path.name == "core.css":
 				continue

@@ -1,0 +1,23 @@
+@charset "utf-8";
+
+p::first-line{
+	font-style: italic;
+}
+
+@supports selector(p::first-line){
+	p::first-line{
+		font-style: italic;
+	}
+}
+
+@supports not selector(p:hover){
+	p:hover{
+		font-style: italic;
+	}
+}
+
+p:not(:hover),
+p::before,
+p::after{
+	font-style: italic;
+}

@@ -1,0 +1,4 @@
+c-028 [Error] extra.css Illegal CSS selector. Hint: Place exotic CSS selectors inside `@supports selector()` blocks and ensure rendering is acceptable when that CSS is inactive.
+ Line 3:        `::first-line`
+ Line 14:       `:hover`
+ Line 19:       `:hover`
