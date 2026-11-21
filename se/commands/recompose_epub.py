@@ -4,6 +4,7 @@ This module implements the `se recompose-epub` command.
 
 import argparse
 from pathlib import Path
+import sys
 
 import se
 from se.se_help_formatter import SeHelpFormatter
@@ -25,13 +26,20 @@ def recompose_epub(plain_output: bool) -> int: # pylint: disable=unused-argument
 
 	try:
 		se_epub = SeEpub(args.directory)
-		recomposed_epub = se_epub.recompose(args.xhtml, Path(args.extra_css_file) if args.extra_css_file else None, args.image_files)
+		recomposed_epub = se_epub.recompose_iter(args.xhtml, Path(args.extra_css_file) if args.extra_css_file else None, args.image_files)
+		# Finish assembling the markup before opening the output file.
+		first_chunk = next(recomposed_epub)
 
 		if args.output:
 			with open(args.output, "w", encoding="utf-8") as file:
-				file.write(recomposed_epub)
+				file.write(first_chunk)
+				for chunk in recomposed_epub:
+					file.write(chunk)
 		else:
-			print(recomposed_epub)
+			sys.stdout.write(first_chunk)
+			for chunk in recomposed_epub:
+				sys.stdout.write(chunk)
+			print()
 	except se.SeException as ex:
 		se.print_error(ex)
 		return ex.code

@@ -4,6 +4,7 @@ Defines the SeEpub class, the master class for representing and operating on Sta
 """
 
 import base64
+from collections.abc import Callable, Iterator
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -943,14 +944,14 @@ class SeEpub:
 
 		return start
 
-	def _recompose_xhtml(self, section: EasyXmlElement, output_dom: EasyXmlTree, use_image_files: bool = False) -> None:
+	def _recompose_xhtml(self, section: EasyXmlElement, output_dom: EasyXmlTree, get_image_url: Callable[[Path], str] | None = None) -> None:
 		"""
 		Helper function used in `self.recompose()`.
 
 		INPUTS
 		section: An `EasyXmlElement` to inspect
 		output_dom: An `EasyXmlTree` representing the entire output dom
-		use_image_files: If `True`, leave image `src` attributes as relative URLs instead of inlining as `data:` URIs.
+		get_image_url: A callback for replacing image URLs, or `None` to leave relative URLs intact.
 
 		OUTPUTS
 		None.
@@ -973,11 +974,11 @@ class SeEpub:
 		else:
 			output_dom.xpath("/html/body")[0].append(section)
 
-		# Convert all `<img>` references to inline base64, unless use_image_files is `True`.
+		# Replace image references with placeholders for deferred data URLs when a callback is provided.
 		# We even convert SVGs instead of inlining them, because CSS won't allow us to style inlined SVGs (for example if we want to apply `max-width` or `filter: invert()`).
-		if not use_image_files:
+		if get_image_url is not None:
 			for img in section.xpath("//img[starts-with(@src, '../images/')]"):
-				img.set_attr("src", se.images.get_data_url(self.content_path / img.get_attr("src").replace("../", "")))
+				img.set_attr("src", get_image_url(self.content_path / img.get_attr("src").replace("../", "")))
 
 	def _scope_recompose_css_selector(self, selector: str, css_class: str) -> str:
 		"""
@@ -1059,7 +1060,16 @@ class SeEpub:
 
 	def recompose(self, output_xhtml5: bool, extra_css_file: Path | None = None, use_image_files: bool = False) -> str:
 		"""
-		Iterate over the XHTML files in this epub and "recompose" them into a single XHTML string representing this ebook.
+		Return the entire recomposed ebook as a string, expanding images after formatting.
+		"""
+
+		return "".join(self.recompose_iter(output_xhtml5, extra_css_file, use_image_files))
+
+	def recompose_iter(self, output_xhtml5: bool, extra_css_file: Path | None = None, use_image_files: bool = False) -> Iterator[str]:
+		"""
+		Recompose this ebook and yield formatted markup and image data URLs separately.
+
+		Using an interator can reduce memory usage by up to 90% for large ebooks with many images.
 
 		INPUTS
 		output_xhtml5: `True` to output XHTML5 instead of HTML5.
@@ -1067,7 +1077,7 @@ class SeEpub:
 		use_image_files: if `True`, leave image `src` attributes as relative URLs instead of inlining as `data:` URIs.
 
 		OUTPUTS
-		A string of HTML5 representing the entire recomposed ebook.
+		An iterator of strings that together represent the entire recomposed ebook.
 		"""
 
 		# Get some header data.
@@ -1099,6 +1109,30 @@ class SeEpub:
 		if extra_css_file:
 			css_filenames.append(extra_css_file)
 
+		image_placeholder_prefix = "se-recompose-image-"
+		if not use_image_files:
+			placeholder_sources = [self.get_file(path).lower() for path in css_filenames]
+			placeholder_sources += [etree.tostring(self.get_dom(path).etree, encoding="unicode").lower() for path in [self.metadata_file_path, self.toc_path, *self.spine_file_paths]]
+
+			while any(image_placeholder_prefix in source for source in placeholder_sources):
+				image_placeholder_prefix += "-"
+
+			del placeholder_sources
+
+		image_paths: dict[str, Path] = {}
+
+		def get_image_placeholder(image_path: Path) -> str:
+			"""
+			Record an image path without retaining its encoded contents in the DOM or CSS.
+			"""
+
+			# Detect missing files now so missing CSS backgrounds retain their existing fallback behavior.
+			image_path.stat()
+			placeholder = f"{image_placeholder_prefix}{len(image_paths)}-end"
+			image_paths[placeholder] = image_path
+
+			return placeholder
+
 		# Now recompose the CSS.
 		for filepath in css_filenames:
 			file_css = self.get_file(filepath)
@@ -1107,13 +1141,13 @@ class SeEpub:
 
 			file_css = regex.sub(r"\s*@(charset|namespace).+?;\s*", "\n", file_css).strip()
 
-			# Convert `background-image` URLs to base64, unless `use_image_files` is `True`.
+			# Defer embedding CSS images until after formatting, unless relative image URLs were requested.
 			if not use_image_files:
 				for image in regex.finditer(pattern=r"""url\("(.+?\.(?:svg|png|jpg))"\)""", string=file_css):
 					url = image.captures(1)[0].replace("../", "")
 					url = regex.sub(r"^/", "", url)
 					try:
-						data_url = se.images.get_data_url(self.content_path / url)
+						data_url = get_image_placeholder(self.content_path / url)
 						file_css = file_css.replace(image.group(0), f"""url("{data_url}")""")
 					except FileNotFoundError:
 						# If the file isn't found, continue silently.
@@ -1177,7 +1211,7 @@ class SeEpub:
 			# Now, recompose the children.
 			for node in dom.xpath("/html/body/*"):
 				try:
-					self._recompose_xhtml(node, output_dom, use_image_files)
+					self._recompose_xhtml(node, output_dom, None if use_image_files else get_image_placeholder)
 				except se.SeException as ex:
 					raise se.SeException(f"[path][link=file://{file_path}]{file_path}[/][/]: {ex}") from ex
 
@@ -1265,7 +1299,19 @@ class SeEpub:
 			# Try to un-self-close them for HTML5 output.
 			output_xhtml = regex.sub(r"<(colgroup|td|th|span)( [^/>]*?)?/>", r"<\1\2></\1>", output_xhtml)
 
-		return output_xhtml
+		# Expand one image at a time after all formatting and compatibility replacements are complete.
+		if not image_paths:
+			yield output_xhtml
+			return
+
+		position = 0
+
+		for match in regex.finditer(regex.escape(image_placeholder_prefix) + r"[0-9]+-end", output_xhtml):
+			yield output_xhtml[position:match.start()]
+			yield se.images.get_data_url(image_paths[match[0]])
+			position = match.end()
+
+		yield output_xhtml[position:]
 
 	def _does_line_require_vertical_offset(self, line: str, previous_line:str|None) -> bool:
 		"""
