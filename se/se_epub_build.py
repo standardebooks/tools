@@ -619,6 +619,9 @@ def _compatibility_replacements_svg(self: 'SeEpub', file_path: Path) -> None:
 		with open(file_path, "w", encoding="utf-8", newline="\n") as file:
 			file.write(dom.to_string())
 
+	# SVG DOMs are no longer needed after their compatibility changes have been written.
+	self.flush_dom(file_path)
+
 def _compatibility_replacements_xhtml(self: 'SeEpub', file_path: Path, has_sequential_full_page_figures: bool, endnote_files_to_be_chunked: list[Path]) -> tuple[bool, list[Path]]:
 	"""
 	Make several replacements needed for compatibility epubs.
@@ -1547,6 +1550,9 @@ def _build_kobo_process_xhtml(work_kepub: 'SeEpub', file_path: Path) -> None:
 	with open(file_path, "w", encoding="utf-8") as file:
 		file.write(xhtml)
 
+	# The completed Kobo chapter will only be read from disk when the archive is written.
+	work_kepub.flush_dom(file_path)
+
 def _build_kobo_process_css(file_path: Path) -> None:
 	"""
 	Support function for _build_kobo: Make changes to CSS files needed for .kepub output.
@@ -2014,6 +2020,10 @@ def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path
 	# Build an epub file we can send to Calibre.
 	se.epub.write_epub(work_compatible_epub_dir, work_dir / compatible_epub_output_filename, last_updated, compression_cache)
 
+	# This is the final EPUB write, so release compressed members and completed DOMs before Calibre allocates memory.
+	compression_cache.clear()
+	self.flush_cache()
+
 	# Generate the Kindle file.
 	cover_path = None
 	for href in metadata_dom.xpath("//item[@properties=\"cover-image\"]/@href", str):
@@ -2115,7 +2125,8 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 	compression_cache: se.epub.EpubCompressionCache = {}
 
 	# Create our temp work directory.
-	with tempfile.TemporaryDirectory() as temp_dir:
+	with tempfile.TemporaryDirectory() as temp_dir, ExitStack() as cache_cleanup:
+		cache_cleanup.callback(self.flush_cache)
 		work_dir = Path(temp_dir)
 		work_compatible_epub_dir: Path = work_dir / self.path.name
 
@@ -2153,9 +2164,12 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 
 		# Simplify CFI links before compatibility replacements change their target locations.
 		# As of 2026-09, only kepub supports EPUB CFIs, however in practice they don't work well since by adding the kepub `<span>`s we alter the document structure and break the actual CFI links; so we also simplify them for kepub anyway.
+		# Discard staged DOMs before another instance updates their files, so later stages read those changes from disk.
+		self.flush_cache()
 		compatible_epub = SeEpub(work_compatible_epub_dir)
 		compatible_epub.metadata_dom = metadata_dom
 		compatible_epub.simplify_cfis()
+		del compatible_epub
 
 		current_cache_paths: set[Path] = set()
 
@@ -2263,8 +2277,3 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 
 		if build_kindle:
 			_build_kindle(self, work_dir, work_compatible_epub_dir, output_dir, kindle_output_filename, toc_filename, metadata_dom, compatible_epub_output_filename, asin, last_updated, compression_cache)
-
-	# Build is all done!
-	# Since we made heavy changes to the ebook's DOM, flush the DOM cache in case we use this class again.
-	self._dom_cache = [] # type: ignore # pylint: disable=protected-access
-	self._file_cache = [] # type: ignore # pylint: disable=protected-access

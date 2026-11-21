@@ -114,8 +114,8 @@ class SeEpub:
 	local_css = ""
 	is_se_ebook = True
 	_language = None
-	_file_cache: dict[str, str] = {}
-	_dom_cache: dict[str, EasyXmlTree] = {}
+	_file_cache: dict[str, str]
+	_dom_cache: dict[str, EasyXmlTree]
 	_repo = None # git.Repo object
 	_last_commit = None # GitCommit object
 	_endnotes: list[Endnote] | None = None
@@ -126,6 +126,10 @@ class SeEpub:
 	_title: str | None = None
 
 	def __init__(self, epub_root_directory: str | Path):
+		# Keep cached files and DOMs owned by this ebook instance so completed build variants can be released.
+		self._file_cache = {}
+		self._dom_cache = {}
+
 		try:
 			self.path = Path(epub_root_directory).resolve()
 
@@ -613,6 +617,14 @@ class SeEpub:
 			self._file_cache[file_path_str] = file_contents
 
 		return self._file_cache[file_path_str]
+
+	def flush_cache(self) -> None:
+		"""
+		Release all cached file contents and DOMs owned by this ebook instance.
+		"""
+
+		self._file_cache.clear()
+		self._dom_cache.clear()
 
 	def flush_dom(self, file_path: Path) -> None:
 		"""
