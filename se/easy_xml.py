@@ -794,11 +794,12 @@ class EasyXmlTree:
 				node.set_attr(f"data-css-{declaration.name}", declaration.value)
 				node.set_attr(f"data-css-{declaration.name}-specificity", str(specificity_number))
 
-	def apply_css(self, css: str, filename: str | None = None):
+	def apply_css(self, css: str, filename: str | None = None, *, rules: list[se.css.CssRule] | None = None) -> None:
 		"""
 		Apply a CSS stylesheet to an XHTML tree. The application is naive and should not be expected to be browser-grade. CSS properties on specific elements can be returned using `EasyXmlElement.get_css_property()`.
 
 		With `filename`, save the resulting rules in a cache to prevent having to re-parse the same stylesheet over and over.
+		With `rules`, apply already parsed rules without parsing or caching the stylesheet.
 
 		Currently this does not support rules/declarations in `@` blocks, like `@supports`.
 
@@ -811,12 +812,13 @@ class EasyXmlTree:
 		"""
 		self.is_css_applied = True
 
-		if filename and filename in CSS_RULES_CACHE:
-			rules = CSS_RULES_CACHE[filename]
-		else:
-			rules = se.css.parse_rules(css)
-			if filename:
-				CSS_RULES_CACHE[filename] = rules
+		if rules is None:
+			if filename and filename in CSS_RULES_CACHE:
+				rules = CSS_RULES_CACHE[filename]
+			else:
+				rules = se.css.parse_rules(css)
+				if filename:
+					CSS_RULES_CACHE[filename] = rules
 
 		# We've parsed the CSS, now apply it to the DOM tree.
 		for rule in rules:

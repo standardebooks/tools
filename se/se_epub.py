@@ -1196,6 +1196,8 @@ class SeEpub:
 		output_dom.is_css_applied = True # We will apply CSS recursively to nodes that will be attached to `output_dom`, so set the bit here.
 
 		# Iterate over spine items in order and recompose them into our output.
+		# Reuse parsed rules within this recomposition without retaining them in the global stylesheet cache.
+		css_rules = se.css.parse_rules(css)
 		needs_wrapper_css = False
 		for file_path in self.spine_file_paths:
 			dom = self.get_dom(file_path)
@@ -1208,7 +1210,7 @@ class SeEpub:
 
 			# Apply the stylesheet to see if we have `position: absolute` on any items. If so, apply `position: relative` to its closest `<section`> ancestor.
 			# See <https://standardebooks.org/ebooks/jean-toomer/cane> for an example of this in action.
-			dom.apply_css(css)
+			dom.apply_css(css, rules=css_rules)
 
 			# Select deepest sections or articles with `id` attributes that have *only* `<figure>` or `<img>` children, and one of those children has `position: absolute`.
 			for node in dom.xpath("/html/body//*[@id and (name() = 'section' or name = 'article') and not(.//*[(name() = 'section' or name() = 'article') and not(preceding-sibling::* or following-sibling::*)]) and count(./*[(name() = 'figure' or name() = 'img')]) = count(./*) and .//*[(name() = 'figure' or name() = 'img') and @data-css-position = 'absolute']]"):
