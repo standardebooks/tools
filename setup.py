@@ -51,9 +51,9 @@ setup(
 		"Development Status :: 5 - Production/Stable",
 		"Intended Audience :: Developers",
 		"Topic :: Software Development :: Build Tools",
-		"License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
 		"Programming Language :: Python :: 3"
 	],
+	license="GPL-3.0-or-later",
 	keywords="ebooks epub",
 	packages=find_packages(),
 	include_package_data=True,
