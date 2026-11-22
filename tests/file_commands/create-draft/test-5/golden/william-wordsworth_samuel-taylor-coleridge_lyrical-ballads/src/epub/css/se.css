@@ -10,8 +10,13 @@ section[epub|type~="titlepage"] h1,
 section[epub|type~="titlepage"] p,
 section[epub|type~="colophon"] h2,
 section[epub|type~="imprint"] h2{
-	left: -999em;
+	clip: rect(0, 0, 0, 0);
+	clip-path: inset(50%);
+	height: 1px;
+	overflow: hidden;
 	position: absolute;
+	white-space: nowrap;
+	width: 1px;
 }
 
 section[epub|type~="titlepage"] img{

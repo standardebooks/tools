@@ -240,7 +240,14 @@ section.epub-type-contains-word-imprint h2{
 	section.epub-type-contains-word-titlepage p,
 	section.epub-type-contains-word-colophon h2,
 	section.epub-type-contains-word-imprint h2{
+		clip: rect(0, 0, 0, 0);
+		clip-path: inset(50%);
 		display: block;
+		height: 1px;
+		left: auto;
+		overflow: hidden;
+		white-space: nowrap;
+		width: 1px;
 	}
 }
 

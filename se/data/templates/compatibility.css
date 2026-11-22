@@ -25,7 +25,14 @@ section[epub|type~="imprint"] h2{
 	section[epub|type~="titlepage"] p,
 	section[epub|type~="colophon"] h2,
 	section[epub|type~="imprint"] h2{
+		clip: rect(0, 0, 0, 0);
+		clip-path: inset(50%);
 		display: block;
+		height: 1px;
+		left: auto;
+		overflow: hidden;
+		white-space: nowrap;
+		width: 1px;
 	}
 }
 
