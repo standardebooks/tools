@@ -10,11 +10,13 @@ import tempfile
 from pathlib import Path
 import importlib.resources
 from typing import cast
+from urllib.parse import unquote
 
 from git import cmd
 from natsort import natsorted
 from PIL import Image, ImageChops
 from PIL.Image import Image as Image_type
+import regex
 
 import se
 from se.se_help_formatter import SeHelpFormatter
@@ -162,16 +164,19 @@ def compare_versions(plain_output: bool) -> int:
 				shutil.copytree(target, work_directory_name, dirs_exist_ok=True)
 
 				target_filenames: set[Path] = set()
+				has_shared_xhtml = False
 
 				for file_path in Path(work_directory_name).glob("**/*.xhtml"):
-					if not args.include_se_files:
-						with open(file_path, "r", encoding="utf-8") as file:
-							is_ignored, _ = se.get_dom_if_not_ignored(se.read_utf8(file))
+					with open(file_path, "r", encoding="utf-8") as file:
+						is_ignored, dom = se.get_dom_if_not_ignored(se.read_utf8(file))
 
-						if not is_ignored:
-							target_filenames.add(file_path)
+					# While not used in SE books, scripts and embedded documents can make unchanged pages depend on changed XHTML, so check them anyway in case this is used on a non-Se ebook.
+					if dom is None or dom.xpath("//*[local-name()='script' or local-name()='iframe' or local-name()='object' or local-name()='embed'] | //@*[starts-with(local-name(), 'on')]"):
+						has_shared_xhtml = True
+					elif any(".xhtml" in unquote(resource).lower() for resource in dom.xpath("//@src | //@srcset | //@data | //@*[local-name()='href' and not(parent::a)] | //@style | //style/text()", str)):
+						has_shared_xhtml = True
 
-					else:
+					if args.include_se_files or not is_ignored:
 						target_filenames.add(file_path)
 
 				git_command = cmd.Git(work_directory_name)
@@ -179,6 +184,20 @@ def compare_versions(plain_output: bool) -> int:
 				if "nothing to commit" in git_command.status():
 					se.print_error("Repo is clean. This command must be run on a dirty repo.", args.verbose, plain_output=plain_output)
 					continue
+
+				if not has_shared_xhtml:
+					for resource_path in Path(work_directory_name).glob("**/*"):
+						if resource_path.suffix.lower() in (".css", ".svg", ".js") and resource_path.is_file():
+							if resource_path.suffix.lower() == ".js" or regex.search(r"(?i)\.xhtml|\\|<script\b|\bon[a-z]+\s*=|@import\b|url\s*\(", resource_path.read_text(encoding="utf-8", errors="replace")):
+								has_shared_xhtml = True
+								break
+
+				# Restrict both rendering passes only when existing XHTML files are the only changes.
+				changes = git_command.diff("HEAD", "--name-status", "--no-renames", "-z").rstrip("\0").split("\0")
+				if not has_shared_xhtml and len(changes) % 2 == 0 and not git_command.ls_files("--others", "--exclude-standard", "-z"):
+					changed_paths = {Path(work_directory_name) / name for name in changes[1::2]}
+					if all(status == "M" for status in changes[::2]) and all(path.suffix == ".xhtml" and path.is_file() for path in changed_paths):
+						target_filenames.intersection_update(changed_paths)
 
 				output_directory = Path(f"./{target.name}_diff-output/")
 
