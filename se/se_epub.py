@@ -13,6 +13,7 @@ from math import floor
 import os
 from pathlib import Path
 import importlib.resources
+from typing import TYPE_CHECKING
 from unicodedata import normalize
 from urllib.parse import quote as url_quote, unquote, urlsplit
 
@@ -30,8 +31,9 @@ import se.css
 import se.easy_xml
 from se.easy_xml import EasyXmlElement, EasyXmlTree
 import se.formatting
-import se.images
-from se.se_epub_lint import LintMessage
+
+if TYPE_CHECKING:
+	from se.se_epub_lint import LintMessage
 
 @dataclass
 class SplitFile:
@@ -1318,11 +1320,13 @@ class SeEpub:
 			yield output_xhtml
 			return
 
+		from se import images # pylint: disable=import-outside-toplevel
+
 		position = 0
 
 		for match in regex.finditer(regex.escape(image_placeholder_prefix) + r"[0-9]+-end", output_xhtml):
 			yield output_xhtml[position:match.start()]
-			yield se.images.get_data_url(image_paths[match[0]])
+			yield images.get_data_url(image_paths[match[0]])
 			position = match.end()
 
 		yield output_xhtml[position:]
@@ -1368,6 +1372,8 @@ class SeEpub:
 		- <https://standardebooks.org/ebooks/hans-jakob-christoffel-von-grimmelshausen/the-adventurous-simplicissimus/alfred-thomas-scrope-goodrick>
 		"""
 
+		from se import images # pylint: disable=import-outside-toplevel
+
 		authors = self.get_display_contributors("aut", False)
 		title = self.title or ""
 		title_string = self.generate_title_string()
@@ -1405,78 +1411,78 @@ class SeEpub:
 		# Calculate the title lines.
 		# We use the cover title box canvas width here, because we want the titlepage to roughly match the cover arrangement.
 		# Note that we can't *always* match the cover layout because the cover text is allowed to be resized, while the titlepage text is not.
-		canvas_width = se.images.COVER_TITLE_BOX_WIDTH - (se.images.COVER_TITLE_BOX_HORIZONTAL_PADDING * 2)
-		title_lines = se.images.calculate_image_lines(title.upper(), se.images.COVER_TITLE_HEIGHT, canvas_width)
+		canvas_width = images.COVER_TITLE_BOX_WIDTH - (images.COVER_TITLE_BOX_HORIZONTAL_PADDING * 2)
+		title_lines = images.calculate_image_lines(title.upper(), images.COVER_TITLE_HEIGHT, canvas_width)
 
 		# Now reset the canvas width to the full width of the titlepage canvas for author/contributor lines.
-		canvas_width = se.TITLEPAGE_WIDTH - (se.images.TITLEPAGE_HORIZONTAL_PADDING * 2)
+		canvas_width = se.TITLEPAGE_WIDTH - (images.TITLEPAGE_HORIZONTAL_PADDING * 2)
 
 		# Calculate the author lines.
 		authors_lines: list[list[str]] = []
 		for author in authors:
-			authors_lines.append(se.images.calculate_image_lines(author.upper(), se.images.TITLEPAGE_AUTHOR_HEIGHT, canvas_width))
+			authors_lines.append(images.calculate_image_lines(author.upper(), images.TITLEPAGE_AUTHOR_HEIGHT, canvas_width))
 
 		# Calculate the contributor lines.
 		contributor_blocks: list[ContributorsBlock] = []
 		for descriptor, contributor_name in contributors.items():
-			contributor_blocks.append(ContributorsBlock(descriptor, se.images.calculate_image_lines(contributor_name.upper(), se.images.TITLEPAGE_CONTRIBUTOR_HEIGHT, canvas_width)))
+			contributor_blocks.append(ContributorsBlock(descriptor, images.calculate_image_lines(contributor_name.upper(), images.TITLEPAGE_CONTRIBUTOR_HEIGHT, canvas_width)))
 
 		# Construct the output.
 		text_elements = ""
-		element_y = se.images.TITLEPAGE_VERTICAL_PADDING
+		element_y = images.TITLEPAGE_VERTICAL_PADDING
 
 		# Add the title.
 		i = 0
 		for line in title_lines:
 			if self._does_line_require_vertical_offset(line, title_lines[i - 1] if i > 0 else None):
-				element_y += floor(se.images.COVER_TITLE_HEIGHT / se.images.LEAGUE_SPARTAN_DIACRITIC_RATIO)
+				element_y += floor(images.COVER_TITLE_HEIGHT / images.LEAGUE_SPARTAN_DIACRITIC_RATIO)
 
-			element_y += se.images.TITLEPAGE_TITLE_HEIGHT
+			element_y += images.TITLEPAGE_TITLE_HEIGHT
 			text_elements += f"\t<text class=\"title\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
-			element_y += se.images.TITLEPAGE_TITLE_MARGIN
+			element_y += images.TITLEPAGE_TITLE_MARGIN
 
 			i = i + 1
 
-		element_y -= se.images.TITLEPAGE_TITLE_MARGIN
+		element_y -= images.TITLEPAGE_TITLE_MARGIN
 
 		# Add the author(s).
 		if authors:
-			element_y += se.images.TITLEPAGE_AUTHOR_SPACING
+			element_y += images.TITLEPAGE_AUTHOR_SPACING
 
 		for author_lines in authors_lines:
 			for line in author_lines:
-				element_y += se.images.TITLEPAGE_AUTHOR_HEIGHT
+				element_y += images.TITLEPAGE_AUTHOR_HEIGHT
 				text_elements += f"\t<text class=\"author\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
-				element_y += se.images.TITLEPAGE_AUTHOR_MARGIN
+				element_y += images.TITLEPAGE_AUTHOR_MARGIN
 
 		if authors:
-			element_y -= se.images.TITLEPAGE_AUTHOR_MARGIN
+			element_y -= images.TITLEPAGE_AUTHOR_MARGIN
 
 		# Add the contributor(s).
 		if contributor_blocks:
-			element_y += se.images.TITLEPAGE_CONTRIBUTORS_SPACING
+			element_y += images.TITLEPAGE_CONTRIBUTORS_SPACING
 			for contributor_block in contributor_blocks:
-				element_y += se.images.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT
+				element_y += images.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT
 				text_elements += f"\t<text class=\"contributor-descriptor\" x=\"700\" y=\"{element_y:.0f}\">{escape(contributor_block.descriptor)}</text>\n"
-				element_y += se.images.TITLEPAGE_CONTRIBUTOR_MARGIN
+				element_y += images.TITLEPAGE_CONTRIBUTOR_MARGIN
 
 				for person in contributor_block.names:
-					element_y += se.images.TITLEPAGE_CONTRIBUTOR_HEIGHT
+					element_y += images.TITLEPAGE_CONTRIBUTOR_HEIGHT
 					line = person.replace(se.NO_BREAK_SPACE, " ")
 					text_elements += f"\t<text class=\"contributor\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
-					element_y += se.images.TITLEPAGE_CONTRIBUTOR_MARGIN
+					element_y += images.TITLEPAGE_CONTRIBUTOR_MARGIN
 
-				element_y -= se.images.TITLEPAGE_CONTRIBUTOR_MARGIN
+				element_y -= images.TITLEPAGE_CONTRIBUTOR_MARGIN
 
-				element_y += se.images.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
+				element_y += images.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
 
-			element_y -= se.images.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
+			element_y -= images.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
 		else:
 			# Remove unused CSS.
 			svg = regex.sub(r"\n\t\t\.contributor-descriptor{.+?}\n", "", svg, flags=regex.DOTALL)
 			svg = regex.sub(r"\n\t\t\.contributor{.+?}\n", "", svg, flags=regex.DOTALL)
 
-		element_y += se.images.TITLEPAGE_VERTICAL_PADDING
+		element_y += images.TITLEPAGE_VERTICAL_PADDING
 
 		svg = svg.replace("</svg>", "\n" + text_elements + "</svg>\n").replace("TITLE_STRING", escape(title_string))
 		svg = regex.sub(r"viewBox=\".+?\"", f"viewBox=\"0 0 {se.TITLEPAGE_WIDTH} {element_y:.0f}\"", svg)
@@ -1501,15 +1507,19 @@ class SeEpub:
 		dest_titlepage_svg_filename = dest_images_directory / "titlepage.svg"
 
 		if source_titlepage_svg_filename.is_file():
+			from se import images # pylint: disable=import-outside-toplevel
+
 			# Convert text to paths.
-			se.images.svg_text_to_paths(source_titlepage_svg_filename, dest_titlepage_svg_filename)
+			images.svg_text_to_paths(source_titlepage_svg_filename, dest_titlepage_svg_filename)
 
 	def _get_cover_title_box_contents_height(self, title_lines: list[str], title_line_height: int, author_lines: list[list[str]]) -> int:
+		from se import images # pylint: disable=import-outside-toplevel
+
 		title_line_count = len(title_lines)
 		# author_lines can have multiple authors with multiple lines per author, so flatten before counting
 		author_line_count = len([y for x in author_lines for y in x])
 
-		spacing = se.images.COVER_AUTHOR_SPACING
+		spacing = images.COVER_AUTHOR_SPACING
 		if author_line_count == 0:
 			spacing = 0
 
@@ -1518,7 +1528,7 @@ class SeEpub:
 		lines_with_diacritic_offset = 0
 
 		# xsmall sizing doesn't require an offset.
-		if title_line_height != se.images.COVER_TITLE_XSMALL_HEIGHT:
+		if title_line_height != images.COVER_TITLE_XSMALL_HEIGHT:
 			i = 0
 			for line in title_lines:
 				if self._does_line_require_vertical_offset(line, title_lines[i - 1] if i > 0 else None):
@@ -1527,11 +1537,11 @@ class SeEpub:
 				i = i + 1
 
 		return (title_line_count * title_line_height) \
-			+ lines_with_diacritic_offset * floor(title_line_height / se.images.LEAGUE_SPARTAN_DIACRITIC_RATIO) \
- 			+ ( (title_line_count - 1) * se.images.COVER_TITLE_MARGIN) \
- 			+ spacing \
- 			+ (author_line_count * se.images.COVER_AUTHOR_HEIGHT) \
- 			+ ( additional_author_line_count * se.images.COVER_AUTHOR_MARGIN)
+			+ lines_with_diacritic_offset * floor(title_line_height / images.LEAGUE_SPARTAN_DIACRITIC_RATIO) \
+			+ ( (title_line_count - 1) * images.COVER_TITLE_MARGIN) \
+			+ spacing \
+			+ (author_line_count * images.COVER_AUTHOR_HEIGHT) \
+			+ ( additional_author_line_count * images.COVER_AUTHOR_MARGIN)
 
 	def generate_cover_svg(self) -> None:
 		"""
@@ -1560,6 +1570,8 @@ class SeEpub:
 		- <https://standardebooks.org/ebooks/hans-jakob-christoffel-von-grimmelshausen/the-adventurous-simplicissimus/alfred-thomas-scrope-goodrick>
 		"""
 
+		from se import images # pylint: disable=import-outside-toplevel
+
 		authors = self.get_display_contributors("aut", False)
 		title = self.title or ""
 		title_string = self.generate_title_string()
@@ -1569,7 +1581,7 @@ class SeEpub:
 		authors = [author.replace("ʻ", "‘").replace("ʼ", "’") for author in authors if author.lower() != "anonymous"]
 
 		svg = ""
-		canvas_width = se.images.COVER_TITLE_BOX_WIDTH - (se.images.COVER_TITLE_BOX_HORIZONTAL_PADDING * 2)
+		canvas_width = images.COVER_TITLE_BOX_WIDTH - (images.COVER_TITLE_BOX_HORIZONTAL_PADDING * 2)
 
 		# Read our template SVG to get some values before we begin.
 		with importlib.resources.files("se.data.templates").joinpath("cover.svg").open("r", encoding="utf-8") as file:
@@ -1581,37 +1593,37 @@ class SeEpub:
 		# Calculate the author lines.
 		authors_lines: list[list[str]] = []
 		for author in authors:
-			authors_lines.append(se.images.calculate_image_lines(author.upper(), se.images.COVER_AUTHOR_HEIGHT, canvas_width))
+			authors_lines.append(images.calculate_image_lines(author.upper(), images.COVER_AUTHOR_HEIGHT, canvas_width))
 
 		# Calculate the title lines.
 		title_upper = title.upper()
-		title_height = se.images.COVER_TITLE_HEIGHT
+		title_height = images.COVER_TITLE_HEIGHT
 		title_class = "title"
-		title_lines = se.images.calculate_image_lines(title_upper, title_height, canvas_width)
+		title_lines = images.calculate_image_lines(title_upper, title_height, canvas_width)
 
 		# Construct the output.
 		text_elements = ""
 
 		# Decide if we have to shrink the title text to fit the title box.
-		max_cover_title_box_canvas_height = se.images.COVER_TITLE_BOX_HEIGHT - (se.images.COVER_TITLE_BOX_VERTICAL_PADDING * 2)
+		max_cover_title_box_canvas_height = images.COVER_TITLE_BOX_HEIGHT - (images.COVER_TITLE_BOX_VERTICAL_PADDING * 2)
 		cover_title_box_contents_height = self._get_cover_title_box_contents_height(title_lines, title_height, authors_lines)
-		cover_title_box_contents_width = se.images.get_image_lines_width(title_lines, title_height)
+		cover_title_box_contents_width = images.get_image_lines_width(title_lines, title_height)
 
 		while (cover_title_box_contents_height > max_cover_title_box_canvas_height or cover_title_box_contents_width > canvas_width) and title_class != "title-xsmall":
 			if title_class == "title-small":
 				title_class = "title-xsmall"
-				title_height = se.images.COVER_TITLE_XSMALL_HEIGHT
+				title_height = images.COVER_TITLE_XSMALL_HEIGHT
 
 			if title_class == "title":
 				title_class = "title-small"
-				title_height = se.images.COVER_TITLE_SMALL_HEIGHT
+				title_height = images.COVER_TITLE_SMALL_HEIGHT
 
-			title_lines = se.images.calculate_image_lines(title_upper, title_height, canvas_width)
+			title_lines = images.calculate_image_lines(title_upper, title_height, canvas_width)
 			cover_title_box_contents_height = self._get_cover_title_box_contents_height(title_lines, title_height, authors_lines)
-			cover_title_box_contents_width = se.images.get_image_lines_width(title_lines, title_height)
+			cover_title_box_contents_width = images.get_image_lines_width(title_lines, title_height)
 
-		element_y = se.images.COVER_TITLE_BOX_Y + \
-			+ ((se.images.COVER_TITLE_BOX_HEIGHT \
+		element_y = images.COVER_TITLE_BOX_Y + \
+			+ ((images.COVER_TITLE_BOX_HEIGHT \
 				- cover_title_box_contents_height \
 			) / 2)
 
@@ -1619,28 +1631,28 @@ class SeEpub:
 		i = 0
 		for line in title_lines:
 			# xsmall sizing doesn't require an offset.
-			if title_height != se.images.COVER_TITLE_XSMALL_HEIGHT:
+			if title_height != images.COVER_TITLE_XSMALL_HEIGHT:
 				if self._does_line_require_vertical_offset(line, title_lines[i - 1] if i > 0 else None):
-					element_y += floor(title_height / se.images.LEAGUE_SPARTAN_DIACRITIC_RATIO)
+					element_y += floor(title_height / images.LEAGUE_SPARTAN_DIACRITIC_RATIO)
 
 			element_y += title_height
 			text_elements += f"\t<text class=\"{title_class}\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
-			element_y += se.images.COVER_TITLE_MARGIN
+			element_y += images.COVER_TITLE_MARGIN
 			i = i + 1
 
-		element_y -= se.images.COVER_TITLE_MARGIN
+		element_y -= images.COVER_TITLE_MARGIN
 
 		# Add the author(s).
 		if authors:
-			element_y += se.images.COVER_AUTHOR_SPACING
+			element_y += images.COVER_AUTHOR_SPACING
 
 			for author_lines in authors_lines:
 				for line in author_lines:
-					element_y += se.images.COVER_AUTHOR_HEIGHT
+					element_y += images.COVER_AUTHOR_HEIGHT
 					text_elements += f"\t<text class=\"author\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
-					element_y += se.images.COVER_AUTHOR_MARGIN
+					element_y += images.COVER_AUTHOR_MARGIN
 
-			element_y -= se.images.COVER_AUTHOR_MARGIN
+			element_y -= images.COVER_AUTHOR_MARGIN
 
 		# Remove unused CSS.
 		if title_class != "title":
@@ -1688,7 +1700,9 @@ class SeEpub:
 
 			# Convert text to paths.
 			if source_cover_svg_filename.is_file():
-				se.images.svg_text_to_paths(source_cover_svg_filename, dest_cover_svg_filename, remove_style=False)
+				from se import images # pylint: disable=import-outside-toplevel
+
+				images.svg_text_to_paths(source_cover_svg_filename, dest_cover_svg_filename, remove_style=False)
 
 			# Embed `cover.jpg`.
 			dom = self.get_dom(dest_cover_svg_filename)

@@ -10,19 +10,13 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, IO, TextIO
 
-from pygments import lex
-from pygments.lexers import find_lexer_class_by_name
-from pygments.token import Comment, Error, Keyword, Literal, Name, String
-from rich.console import Console
-from rich.text import Text
 from rich.theme import Theme
-from natsort import natsorted, ns
 import regex
 
-import se.easy_xml
-from se.css_constants import CSS_BLOCK_ELEMENTS, CSS_PROPERTIES
-
 if TYPE_CHECKING:
+	from rich.console import Console
+	from rich.text import Text
+	from se.easy_xml import EasyXmlTree
 	from se.se_epub_build import BuildMessage # Import under type checking guard to prevent circular import error.
 
 
@@ -228,12 +222,19 @@ def init_console() -> Console:
 	Initialize a `rich.Console` object.
 	"""
 
-	return Console(highlight=False, theme=se.RICH_THEME, soft_wrap=True, force_terminal=se.should_output_color())
+	from rich.console import Console # pylint: disable=import-outside-toplevel
+
+	return Console(highlight=False, theme=RICH_THEME, soft_wrap=True, force_terminal=should_output_color())
 
 def highlight_xml(text: str) -> Text:
 	"""
 	Syntax highlight XML using the Standard Ebooks theme.
 	"""
+
+	from pygments import lex # pylint: disable=import-outside-toplevel
+	from pygments.lexers import find_lexer_class_by_name # pylint: disable=import-outside-toplevel
+	from pygments.token import Comment, Error, Name, String # pylint: disable=import-outside-toplevel
+	from rich.text import Text # pylint: disable=import-outside-toplevel
 
 	output = Text()
 	for token_type, token_text in lex(text, find_lexer_class_by_name("xml")(ensurenl=False)):
@@ -257,6 +258,12 @@ def highlight_css(text: str) -> Text:
 	"""
 	Syntax highlight CSS using the Standard Ebooks theme.
 	"""
+	from pygments import lex # pylint: disable=import-outside-toplevel
+	from pygments.lexers import find_lexer_class_by_name # pylint: disable=import-outside-toplevel
+	from pygments.token import Comment, Error, Keyword, Literal, Name # pylint: disable=import-outside-toplevel
+	from rich.text import Text # pylint: disable=import-outside-toplevel
+	from se.css_constants import CSS_BLOCK_ELEMENTS, CSS_PROPERTIES # pylint: disable=import-outside-toplevel
+
 	# Pygments treats isolated CSS properties and keyword values as element selectors, so classify these fragments using the toolset’s supported property and element lists.
 	fragment = text.strip()
 	if fragment in CSS_PROPERTIES:
@@ -305,6 +312,11 @@ def highlight_css_selector(text: str) -> Text:
 	"""
 	Syntax highlight a CSS selector using the Standard Ebooks theme.
 	"""
+
+	from pygments import lex # pylint: disable=import-outside-toplevel
+	from pygments.lexers import find_lexer_class_by_name # pylint: disable=import-outside-toplevel
+	from pygments.token import Comment, Error, Literal, Name # pylint: disable=import-outside-toplevel
+	from rich.text import Text # pylint: disable=import-outside-toplevel
 
 	output = Text()
 	in_attribute_selector = False
@@ -373,10 +385,10 @@ def get_config_file() -> Path:
 	"""
 	Return the Standard Ebooks config file path for this local machine.
 	"""
-	return se.get_config_directory() / "configuration.xml"
+	return get_config_directory() / "configuration.xml"
 
 @functools.cache
-def _get_config_dom() -> se.easy_xml.EasyXmlTree | None:
+def _get_config_dom() -> EasyXmlTree | None:
 	"""
 	Return the cached local configuration DOM, if one exists and is readable.
 	"""
@@ -385,8 +397,10 @@ def _get_config_dom() -> se.easy_xml.EasyXmlTree | None:
 
 	try:
 		with open(config_file_path, "rb") as file:
-			return se.easy_xml.EasyXmlTree(read_utf8(file))
-	except (OSError, se.InvalidXmlException):
+			from se.easy_xml import EasyXmlTree # pylint: disable=import-outside-toplevel
+
+			return EasyXmlTree(read_utf8(file))
+	except (OSError, InvalidXmlException):
 		return None
 
 def get_config_value(key: str) -> str:
@@ -451,7 +465,7 @@ def parse_size_string(size_string: str) -> int:
 	match = regex.fullmatch(r"(\d+(?:\.\d+)?)(KB|MB|GB|TB)", size_string, flags=regex.IGNORECASE)
 
 	if not match:
-		raise se.InvalidArgumentsException(f"Invalid value: [val]{size_string}[/].")
+		raise InvalidArgumentsException(f"Invalid value: [val]{size_string}[/].")
 
 	return int(float(match.group(1)) * size_units[match.group(2).upper()])
 
@@ -487,23 +501,23 @@ def should_output_color(output_file: TextIO = sys.stdout) -> bool:
 	"""
 
 	# If we set the `NO_COLOR` environmental variable, then don't output color.
-	if se.is_no_color_set():
+	if is_no_color_set():
 		return False
 
 	# If we invoked this with `se --color`, then output color.
-	if se.COLOR_OUTPUT and not se.is_no_color_set():
+	if COLOR_OUTPUT and not is_no_color_set():
 		return True
 
 	# Otherwise, if we're an interactive session, or called from `parallel`, output color.
-	return output_file.isatty() or bool(se.is_called_from_parallel(return_none=False))
+	return output_file.isatty() or bool(is_called_from_parallel(return_none=False))
 
 def prep_output(message: str, plain_output: bool = False) -> str:
 	"""
 	Return a message formatted for the chosen output style, i.e., color or plain.
 	"""
 
-	if plain_output or not se.should_output_color():
-		replacement = "" if se.COLOR_OUTPUT else "`"
+	if plain_output or not should_output_color():
+		replacement = "" if COLOR_OUTPUT else "`"
 		message = regex.sub(r"\[/?hint\]", "", message)
 		# Replace color markup with the configured plain-text marker.
 		message = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|css-property|css-selector|val|class|path|url|text|link|command|branch|email|flag|header|parameter|user)(?:=[^\]]*?)*\]", replacement, message)
@@ -535,6 +549,8 @@ def print_error(message: SeException | str, verbose: bool = False, is_warning: b
 	[user] - A username
 	"""
 
+	from rich.console import Console # pylint: disable=import-outside-toplevel
+
 	label = "Error" if not is_warning else "Warning"
 	bg_color = "red" if not is_warning else "yellow"
 
@@ -547,10 +563,10 @@ def print_error(message: SeException | str, verbose: bool = False, is_warning: b
 	if verbose:
 		message = str(message).replace("\n", f"\n{MESSAGE_INDENT}")
 
-	if not se.should_output_color(output_file):
+	if not should_output_color(output_file):
 		plain_output = True
 
-	console = Console(file=output_file, highlight=False, theme=RICH_THEME, force_terminal=se.should_output_color(output_file), soft_wrap=True) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
+	console = Console(file=output_file, highlight=False, theme=RICH_THEME, force_terminal=should_output_color(output_file), soft_wrap=True) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
 
 	if plain_output:
 		# Replace color markup with ```.
@@ -614,6 +630,8 @@ def get_target_filenames(targets: list[str]|list[Path], allowed_extensions: tupl
 
 	# Sorting the combined results also orders filenames within each directory.
 	if sort_results:
+		from natsort import natsorted, ns # pylint: disable=import-outside-toplevel
+
 		return natsorted(list(target_xhtml_filenames), key=str, alg=ns.PATH)
 
 	return list(target_xhtml_filenames)
@@ -643,7 +661,7 @@ def is_called_from_parallel(return_none:bool=True) -> bool | None:
 
 	return None if return_none else False
 
-def get_dom_if_not_ignored(xhtml: str, ignored_types: list[str] | None = None) -> tuple[bool, None | se.easy_xml.EasyXmlTree]:
+def get_dom_if_not_ignored(xhtml: str, ignored_types: list[str] | None = None) -> tuple[bool, None | EasyXmlTree]:
 	"""
 	Given a string of XHTML, return a DOM tree *only if* the DOM does not contain a top-level `<section>` element with any of the passed semantics.
 
@@ -657,12 +675,14 @@ def get_dom_if_not_ignored(xhtml: str, ignored_types: list[str] | None = None) -
 	If the DOM couldn't be created (for example it is invalid XML) then the DOM part of the tuple will be `None`.
 	"""
 
+	from se.easy_xml import EasyXmlTree # pylint: disable=import-outside-toplevel
+
 	is_ignored = False
 	ignored_regex = None
 	dom = None
 
 	try:
-		dom = se.easy_xml.EasyXmlTree(xhtml)
+		dom = EasyXmlTree(xhtml)
 	except Exception:
 		return (False, None)
 

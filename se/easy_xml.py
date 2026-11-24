@@ -4,16 +4,18 @@ Defines the EasyXmlTree class, which is a convenience wrapper around etree.
 The class exposes some helpful functions like css_select() and xpath().
 """
 
-from typing import Any, overload, Literal
+from typing import Any, overload, Literal, TYPE_CHECKING
 import unicodedata
 
 import regex
-from lxml import cssselect, etree
-from cssselect import parser
+from lxml import etree
 
 # Not sure how to get around pylint error, so just ignore it for now until someone can solve it.
 import se # pylint: disable=cyclic-import
-import se.css # pylint: disable=cyclic-import
+
+if TYPE_CHECKING:
+	from lxml import cssselect
+	import se.css
 
 CSS_SELECTOR_CACHE: dict[str, cssselect.CSSSelector] = {}
 CSS_RULES_CACHE: dict[str, list[se.css.CssRule]] = {}
@@ -688,6 +690,9 @@ class EasyXmlTree:
 		Shortcut to select elements based on CSS selector.
 		"""
 
+		from lxml import cssselect # pylint: disable=import-outside-toplevel
+		from cssselect import parser # pylint: disable=import-outside-toplevel
+
 		try:
 			sel = CSS_SELECTOR_CACHE.get(selector)
 			if not sel:
@@ -810,6 +815,9 @@ class EasyXmlTree:
 			print(node.get_css_property("font-style"))
 		```
 		"""
+		from lxml import cssselect # pylint: disable=import-outside-toplevel
+		import se.css # pylint: disable=import-outside-toplevel
+
 		self.is_css_applied = True
 
 		if rules is None:
