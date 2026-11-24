@@ -575,7 +575,7 @@ def is_positive_integer(value: str) -> int:
 
 	return int_value
 
-def get_target_filenames(targets: list[str]|list[Path], allowed_extensions: tuple[str, ...] | str) -> list[Path]:
+def get_target_filenames(targets: list[str]|list[Path], allowed_extensions: tuple[str, ...] | str, sort_results: bool = True) -> list[Path]:
 	"""
 	Helper function to convert a list of filenames or directories into a list of filenames based on some parameters.
 
@@ -584,9 +584,10 @@ def get_target_filenames(targets: list[str]|list[Path], allowed_extensions: tupl
 	INPUTS
 	targets: A list of filenames or directories.
 	allowed_extensions: A tuple containing a series of allowed filename extensions; extensions must begin with `.`.
+	sort_results: Whether to naturally sort the returned filenames.
 
 	OUTPUTS
-	A set of file paths and filenames contained in the target list.
+	A deduplicated list of file paths and filenames contained in the target list.
 	"""
 
 	target_xhtml_filenames: set[Path] = set()
@@ -603,7 +604,7 @@ def get_target_filenames(targets: list[str]|list[Path], allowed_extensions: tupl
 				if ".git" in directories:
 					directories.remove(".git")
 
-				for filename in natsorted(filenames):
+				for filename in filenames:
 					file_path = Path(root) / Path(filename)
 					if file_path.suffix in allowed_extensions:
 						target_xhtml_filenames.add(file_path)
@@ -611,7 +612,11 @@ def get_target_filenames(targets: list[str]|list[Path], allowed_extensions: tupl
 			# If we're looking at an actual file, just add it regardless of whether it's ignored.
 			target_xhtml_filenames.add(target)
 
-	return natsorted(list(target_xhtml_filenames), key=str, alg=ns.PATH)
+	# Sorting the combined results also orders filenames within each directory.
+	if sort_results:
+		return natsorted(list(target_xhtml_filenames), key=str, alg=ns.PATH)
+
+	return list(target_xhtml_filenames)
 
 def is_called_from_parallel(return_none:bool=True) -> bool | None:
 	"""

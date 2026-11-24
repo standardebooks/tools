@@ -32,7 +32,7 @@ def word_count(plain_output: bool) -> int:
 	if args.exclude_se_files:
 		excluded_files = ["colophon", "titlepage", "imprint", "copyright-page", "halftitlepage", "toc", "loi", "endnotes"]
 
-	for filename in se.get_target_filenames(args.targets, (".xhtml", ".html", ".htm")):
+	for filename in se.get_target_filenames(args.targets, (".xhtml", ".html", ".htm"), sort_results=False):
 		try:
 			with open(filename, "r", encoding="utf-8") as file:
 				xhtml = se.read_utf8(file)
@@ -40,7 +40,11 @@ def word_count(plain_output: bool) -> int:
 			# Remove HTML entities.
 			xhtml = regex.sub(r"&[^;\s\b]+?;", " ", xhtml)
 
-			is_ignored, dom = se.get_dom_if_not_ignored(xhtml, excluded_files)
+			is_ignored = False
+			dom = None
+			# Only parse the DOM when excluding SE files or removing PG boilerplate.
+			if args.exclude_se_files or args.ignore_pg_boilerplate:
+				is_ignored, dom = se.get_dom_if_not_ignored(xhtml, excluded_files)
 
 			if not is_ignored:
 				# Try to remove PG header/footers.
