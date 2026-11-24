@@ -668,7 +668,7 @@ def modernize_spelling(xhtml: str) -> str:
 	if language == "en-US":
 		xhtml = regex.sub(r"([Mm])an(?:œ|oe|e)uvred", r"\1aneuvered", xhtml)
 		xhtml = regex.sub(r"([Mm])an(?:œ|oe)uv(?:er|re)", r"\1aneuver", xhtml)
-		xhtml = regex.sub(r"([Mm])an(?:œ|oe)uvering", r"\1aneuvering", xhtml)
+		xhtml = regex.sub(r"([Mm])an(?:œ|oe)uve?ring", r"\1aneuvering", xhtml)
 	else:
 		xhtml = regex.sub(r"([Mm])an(?:œ|oe)uv(?:er|re)", r"\1anoeuvre", xhtml)
 		xhtml = regex.sub(r"([Mm])an(?:œ|oe)uvring", r"\1anoeuvring", xhtml)
