@@ -1,0 +1,10 @@
+c-007 [Error] extra.css Illegal CSS property. Hint: Place exotic CSS properties inside `@supports()` blocks and ensure rendering is acceptable when that CSS is inactive.
+ Line 5:        `color`
+c-030 [Error] extra.css Illegal CSS function. Hint: Place CSS functions inside `@supports()` blocks and ensure rendering is acceptable when that CSS is inactive.
+ Line 4:        `width: calc(100% - 1em)`
+ Line 5:        `color: rgb(0, 0, 0)`
+ Line 16:       `width: min(100%, 10em)`
+ Line 23:       `width: calc(100% - 1em)`
+ Line 29:       `width: calc(100% - 1em)`
+ Line 47:       `width: clamp(1em, calc(100% - 1em), 10em)`
+ Line 54:       `width: calc(100% - 1em)`

@@ -1,0 +1,56 @@
+@charset "utf-8";
+
+p{
+	width: calc(100% - 1em);
+	color: rgb(0, 0, 0);
+	background-image: url(image.svg);
+	content: "calc(1em)";
+	/* A comment containing calc(1em) is not a function value. */
+}
+
+@supports (width: calc(100% - 1em)){
+
+	@media all{
+		p{
+			width: calc(100% - 1em);
+			width: min(100%, 10em);
+		}
+	}
+}
+
+@supports not (width: calc(100% - 1em)){
+	p{
+		width: calc(100% - 1em);
+	}
+}
+
+@supports (width: calc(100% - 1em)) or (width: 100%){
+	p{
+		width: calc(100% - 1em);
+	}
+}
+
+@supports (width: calc(100% - 1em)) and (color: rgb(0, 0, 0)){
+	p{
+		width: calc(100% - 1em);
+		color: rgb(0, 0, 0);
+	}
+}
+
+@supports (background-image: url("image.svg")){
+	p{
+		background-image: url("image.svg");
+	}
+}
+
+p{
+	width: clamp(1em, calc(100% - 1em), 10em);
+	background-image: url("image.svg");
+	content: "rgb(0, 0, 0)";
+}
+
+@media all{
+	p{
+		width: calc(100% - 1em);
+	}
+}

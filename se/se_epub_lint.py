@@ -171,6 +171,7 @@ CSS
 "c-027", "Illegal [css-property]font-size[/] below [val]1[/]."
 "c-028", "Illegal CSS selector. [hint]Hint: Place exotic CSS selectors inside [css]@supports selector()[/] blocks and ensure rendering is acceptable when that CSS is inactive.[/hint]"
 "c-029", "CSS pseudo-element prefixed with only one [css-selector]:[/]."
+"c-030", "Illegal CSS function. [hint]Hint: Place CSS functions inside [css]@supports()[/] blocks and ensure rendering is acceptable when that CSS is inactive.[/hint]"
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -1623,11 +1624,12 @@ def css_supports_features(tokens: list[Node], selector_tests: bool = False) -> s
 	return tests[0].union(*tests[1:])
 
 def lint_css_whitelist(source_file: SourceFile, allowed_properties: dict[str, tuple[str, set[str]]], allowed_selectors: set[str]) -> list[LintMessage]:
-	"""Check for invalid CSS properties and pseudo selectors."""
+	"""Check for invalid CSS properties, pseudo selectors, and functions."""
 
 	submessages: list[LintSubmessage] = []
 	selector_submessages: list[LintSubmessage] = []
 	pseudo_element_submessages: list[LintSubmessage] = []
+	function_submessages: list[LintSubmessage] = []
 	# Pseudo-elements require two colons even when legacy single-colon syntax is supported.
 	pseudo_elements = {
 		"after", "backdrop", "before", "checkmark", "column", "cue", "cue-region", "details-content",
@@ -1661,6 +1663,13 @@ def lint_css_whitelist(source_file: SourceFile, allowed_properties: dict[str, tu
 				pending.append((tinycss2.parser.parse_blocks_contents(rule.content, skip_comments=True, skip_whitespace=True), guard, selector_guard))
 
 			elif isinstance(rule, Declaration):
+				# Allow format() and url(), including unquoted URL tokens.
+				if any(isinstance(token, FunctionBlock) and token.name.lower() not in ("url", "format") for token in rule.value):
+					value = tinycss2.serializer.serialize([item for item in rule.value if not isinstance(item, (WhitespaceToken, Comment))]).lower()
+					if (rule.lower_name, value) not in supported:
+						text = f"[css]{escape(rule.name)}: {escape(tinycss2.serializer.serialize(rule.value).strip())}[/]"
+						function_submessages.append(LintSubmessage(text, cast(int, getattr(rule, "source_line"))))
+
 				approval = allowed_properties.get(rule.lower_name)
 				requirement, allowed_values = approval or ("", set())
 
@@ -1696,6 +1705,9 @@ def lint_css_whitelist(source_file: SourceFile, allowed_properties: dict[str, tu
 
 	if pseudo_element_submessages:
 		messages.append(LintMessage("c-029", "CSS pseudo-element prefixed with only one [css-selector]:[/].", se.MESSAGE_TYPE_ERROR, source_file.filename, sorted(pseudo_element_submessages, key=lambda item: item.line_num or 0)))
+
+	if function_submessages:
+		messages.append(LintMessage("c-030", "Illegal CSS function. [hint]Hint: Place CSS functions inside [css]@supports()[/] blocks and ensure rendering is acceptable when that CSS is inactive.[/hint]", se.MESSAGE_TYPE_ERROR, source_file.filename, sorted(function_submessages, key=lambda item: item.line_num or 0)))
 
 	return messages
 
