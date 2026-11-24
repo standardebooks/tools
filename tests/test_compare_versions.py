@@ -8,6 +8,7 @@ from unittest.mock import Mock
 
 from PIL import Image
 import pytest
+from selenium.common.exceptions import WebDriverException
 
 from se.browser import Browser, BrowserType
 import se.commands.compare_versions as compare_versions_module
@@ -15,7 +16,8 @@ from se.commands.compare_versions import _screenshot_html_element # pyright: ign
 
 
 @pytest.mark.parametrize("height", [5, 6])
-def test_firefox_screenshot_includes_every_viewport(tmp_path: Path, height: int) -> None:
+@pytest.mark.parametrize("fallback", ["error", "truncated", "positioned"])
+def test_firefox_screenshot_includes_every_viewport(tmp_path: Path, height: int, fallback: str) -> None:
 	"""
 	Capture content above the final viewport, including an overlapping final tile.
 	"""
@@ -24,7 +26,7 @@ def test_firefox_screenshot_includes_every_viewport(tmp_path: Path, height: int)
 	browser.type = BrowserType.FIREFOX
 	positions = [min(position, height - 2) for position in range(0, height, 2)]
 	browser.driver.execute_script.side_effect = [
-		{"width": 4, "height": height, "viewportWidth": 4, "viewportHeight": 2},
+		{"width": 4, "height": height, "viewportWidth": 4, "viewportHeight": 2, "pixelWidth": 4, "pixelHeight": height, "hasPositionedElements": fallback == "positioned"},
 		*positions,
 	]
 	viewports: list[bytes] = []
@@ -35,6 +37,10 @@ def test_firefox_screenshot_includes_every_viewport(tmp_path: Path, height: int)
 		buffer = BytesIO()
 		viewport.save(buffer, format="PNG")
 		viewports.append(buffer.getvalue())
+	if fallback == "error":
+		browser.driver.get_full_page_screenshot_as_png.side_effect = WebDriverException("Native capture is unavailable.")
+	else:
+		browser.driver.get_full_page_screenshot_as_png.return_value = viewports[0]
 	browser.driver.get_screenshot_as_png.side_effect = viewports
 	output = tmp_path / "screenshot.png"
 
@@ -44,6 +50,29 @@ def test_firefox_screenshot_includes_every_viewport(tmp_path: Path, height: int)
 		assert screenshot.size == (4, height)
 		for row in range(height):
 			assert screenshot.getpixel((0, row)) == (row + 1, 0, 0)
+	assert browser.driver.get_full_page_screenshot_as_png.call_count == (0 if fallback == "positioned" else 1)
+
+
+def test_firefox_native_screenshot_preserves_every_pixel(tmp_path: Path) -> None:
+	"""
+	Save the full native capture without scrolling or re-encoding it.
+	"""
+
+	browser = Mock(spec=Browser)
+	browser.type = BrowserType.FIREFOX
+	browser.driver.execute_script.return_value = {"pixelWidth": 4, "pixelHeight": 7, "hasPositionedElements": False}
+	image = Image.new("RGB", (4, 7), "white")
+	image.putpixel((3, 6), (255, 0, 0))
+	buffer = BytesIO()
+	image.save(buffer, format="PNG")
+	browser.driver.get_full_page_screenshot_as_png.return_value = buffer.getvalue()
+	output = tmp_path / "screenshot.png"
+
+	_screenshot_html_element(browser, tmp_path / "chapter.xhtml", output)
+
+	assert output.read_bytes() == buffer.getvalue()
+	browser.driver.get_screenshot_as_png.assert_not_called()
+	assert browser.driver.execute_script.call_count == 1
 
 
 @pytest.mark.parametrize("scenario, expected", [

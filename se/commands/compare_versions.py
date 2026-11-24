@@ -17,6 +17,8 @@ from natsort import natsorted
 from PIL import Image, ImageChops
 from PIL.Image import Image as Image_type
 import regex
+from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.firefox.webdriver import WebDriver as FirefoxWebDriver
 
 import se
 from se.se_help_formatter import SeHelpFormatter
@@ -59,7 +61,7 @@ def _screenshot_html_element(browser: 'Browser', filename: Path, output_path: Pa
 		_screenshot_chrome_full_page(browser, output_path)
 
 	elif browser.type == BrowserType.FIREFOX:
-		# Firefox can silently capture only the visible part of a large element, so stitch viewport screenshots to include the entire page.
+		# Firefox's native full-page API avoids the clipping of large element screenshots.
 		_screenshot_firefox_full_page(browser, output_path)
 
 	else:
@@ -67,7 +69,7 @@ def _screenshot_html_element(browser: 'Browser', filename: Path, output_path: Pa
 
 def _screenshot_firefox_full_page(browser: 'Browser', output_path: Path) -> None:
 	"""
-	Save a full-page Firefox screenshot by stitching together viewport-sized screenshots.
+	Save a native full-page Firefox screenshot, falling back to stitching when necessary.
 	"""
 
 	get_dimensions_script = """
@@ -75,10 +77,25 @@ def _screenshot_firefox_full_page(browser: 'Browser', output_path: Path) -> None
 			width: document.documentElement.clientWidth,
 			height: Math.max(document.documentElement.scrollHeight, document.body.scrollHeight),
 			viewportWidth: window.innerWidth,
-			viewportHeight: window.innerHeight
+			viewportHeight: window.innerHeight,
+			pixelWidth: Math.round(document.documentElement.clientWidth * window.devicePixelRatio),
+			pixelHeight: Math.round(Math.max(document.documentElement.scrollHeight, document.body.scrollHeight) * window.devicePixelRatio),
+			hasPositionedElements: Array.from(document.querySelectorAll("*")).some(element => ["fixed", "sticky"].includes(getComputedStyle(element).position))
 		};
 	"""
 	dimensions = cast(dict[str, int], browser.driver.execute_script(get_dimensions_script)) # pyright: ignore[reportUnknownMemberType] Broken Selenium type hint here.
+	# Preserve stitched fixed and sticky content and reject truncated native captures.
+	if not dimensions["hasPositionedElements"]:
+		try:
+			screenshot = cast(FirefoxWebDriver, browser.driver).get_full_page_screenshot_as_png()
+			with Image.open(BytesIO(screenshot)) as image:
+				if image.size == (dimensions["pixelWidth"], dimensions["pixelHeight"]):
+					output_path.write_bytes(screenshot)
+					return
+		except (WebDriverException, OSError):
+			# Retain full-page coverage when native capture is unavailable.
+			pass
+
 	full_page_image = None
 
 	for scroll_position in range(0, dimensions["height"], dimensions["viewportHeight"]):
@@ -264,7 +281,7 @@ def compare_versions(plain_output: bool) -> int:
 							if args.copy_images:
 								# Create the binary overlay mask only when images are requested.
 								red, green, blue, alpha = diff.split()
-								diff_mask = ImageChops.lighter(ImageChops.lighter(red, green), ImageChops.lighter(blue, alpha)).point([0] + [255] * 255)
+								diff_mask = ImageChops.lighter(ImageChops.lighter(red, green), ImageChops.lighter(blue, alpha)).point([0] + [255] * 255) # pyright: ignore[reportUnknownMemberType] Pillow's lookup-table annotation includes an optional NumPy type.
 
 								try:
 									output_directory.mkdir(parents=True, exist_ok=True)
