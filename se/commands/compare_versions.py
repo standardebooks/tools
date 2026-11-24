@@ -214,7 +214,6 @@ def compare_versions(plain_output: bool) -> int:
 
 						_screenshot_html_element(browser, filename, file_new_screenshot_path)
 
-						has_difference = False
 						original_image_file = Image.open(file_original_screenshot_path)
 						new_image_file = Image.open(file_new_screenshot_path)
 
@@ -238,16 +237,12 @@ def compare_versions(plain_output: bool) -> int:
 						# Now get the diff.
 						diff = ImageChops.difference(original_image.convert("RGBA"), new_image.convert("RGBA"))
 
-						# Process every pixel to see if there's a difference, and then convert that difference to red.
-						if diff.convert("RGB").getbbox():
-							width, height = diff.size
-							for image_x in range(0, width - 1):
-								for image_y in range(0, height - 1):
-									if diff.getpixel((image_x, image_y)) != (0, 0, 0, 0):
-										has_difference = True
-										diff.putpixel((image_x, image_y), (255, 0, 0, 255)) # Change the mask color to red.
-
+						# Detect differences and create a binary mask using Pillow's channel operations.
+						has_difference = diff.convert("RGB").getbbox() is not None
 						if has_difference:
+							red, green, blue, alpha = diff.split()
+							diff_mask = ImageChops.lighter(ImageChops.lighter(red, green), ImageChops.lighter(blue, alpha)).point([0] + [255] * 255)
+
 							files_with_differences.add(filename)
 
 							if args.copy_images:
@@ -257,7 +252,7 @@ def compare_versions(plain_output: bool) -> int:
 									shutil.copy(file_new_screenshot_path, output_directory)
 									shutil.copy(file_original_screenshot_path, output_directory)
 
-									original_image_file.paste(diff.convert("RGB"), mask=diff)
+									original_image_file.paste((255, 0, 0), mask=diff_mask)
 									original_image_file.save(output_directory / (filename.name + "-diff.png"))
 
 								except Exception:
