@@ -416,6 +416,7 @@ SEMANTICS & CONTENT
 "s-106", "Proper name in the colophon without parent [xhtml]<a href=\"...\">[/] or [xhtml]<b epub:type=\"z3998:given-name\">[/], or [xhtml]<b>[/] if anonymous."
 "s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/] or [xhtml]<b>An Anonymous Sponsor</b>[/]. [hint]Hint: Is there a missing [attr]@epub:type[/] semantic?[/hint]"
 "s-108", "[xhtml]<thead>[/] element with non-empty [xhtml]<td>[/] descendant. [hint]Hint: Use [xhtml]<th>[/] instead.[/hint]"
+"s-109", "[text]BCE[/] or [text]CE[/] in colophon. [hint]Hint: Use [text]BC[/] or [text]AD[/] instead.[/hint]"
 
 TYPOGRAPHY
 "t-001", "Illegal double spacing. [hint]Hint: Sentences should be single-spaced. Spaces might include Unicode hair spaces and no-break spaces.[/hint]"
@@ -2091,6 +2092,11 @@ def _lint_special_file_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 
 		if ebook_flags["has_multiple_page_scans"] and not dom.xpath("/html/body//a[contains(@href, '#page-scans')]"):
 			messages.append(LintMessage("m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+		# Check for era abbreviations that should use BC and AD in the colophon.
+		nodes = dom.xpath("/html/body//abbr[. = 'BCE' or . = 'CE']")
+		if nodes:
+			messages.append(LintMessage("s-109", "[text]BCE[/] or [text]CE[/] in colophon. [hint]Hint: Use [text]BC[/] or [text]AD[/] instead.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 		# Check for centuries written with words instead of numeric ordinals.
 		nodes = dom.xpath("/html/body//*[text()[re:test(., ' [a-z]+ century', 'i')]]")

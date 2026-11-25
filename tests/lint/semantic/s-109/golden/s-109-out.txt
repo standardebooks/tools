@@ -1,0 +1,3 @@
+s-109 [Error] colophon.xhtml `BCE` or `CE` in colophon. Hint: Use `BC` or `AD` instead.
+ Line 15:       <abbr epub:type="se:era">BCE</abbr>
+ Line 29:       <abbr epub:type="se:era">CE</abbr>
