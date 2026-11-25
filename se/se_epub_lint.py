@@ -267,6 +267,7 @@ METADATA
 "m-069", "[text]comprised of[/] in metadata. [hint]Hint: Is there a better phrase to use here?[/hint]"
 "m-070", "Glossary entries not present in the text:"
 "m-071", "Contributor name must be [text]VALUE[/]."
+"m-072", "Translator found in metadata, but no translation year in colophon."
 "m-073", "Anonymous contributor values must be exactly [text]Anonymous[/]."
 "m-074", "Multiple transcriptions found in metadata, but no link to [text]EBOOK_URL#transcriptions[/]."
 "m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/]."
@@ -302,7 +303,6 @@ METADATA
 "m-108", "[val]schema:sameAs[/] URL not pointing to [url]https://en.wikipedia.org/[/] or [url]https://id.loc.gov/[/]. [hint]Hint: Other URLs should be [val]schema:url[/].[/hint]"
 "m-109", "Non-canonical GitHub URL. [hint]Hint: URLs must start with [url]https://github.com/[/] and have no trailing slash.[/hint]"
 UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"m-072", ""
 "m-080", ""
 "m-082", ""
 "m-104", ""
@@ -2039,8 +2039,12 @@ def _lint_special_file_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 		if mismatched_contributors:
 			messages.append(LintMessage("m-107", "Contributor has a [val]schema:url[/] or [val]schema:sameAs[/] element in the metadata but isn’t linked in the colophon, or vice versa.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(mismatched_contributors)))
 
-		if self.metadata_dom.xpath("/package/metadata/meta[@property='role' and text()='trl']") and "translated from" not in source_file.contents:
-			messages.append(LintMessage("m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon.", se.MESSAGE_TYPE_ERROR, filename))
+		if self.metadata_dom.xpath("/package/metadata/meta[@property='role' and text()='trl']"):
+			if "translated from" not in colophon_text:
+				messages.append(LintMessage("m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon.", se.MESSAGE_TYPE_ERROR, filename))
+			# Only accept dates in the translation statement, before the translator credit.
+			elif not regex.search(r"\btranslated from\b(?:(?!\bby\b)[^.!?;])*?\b(?:in [0-9]{1,4}|between [0-9]{1,4} and [0-9]{1,4})\b", colophon_text):
+				messages.append(LintMessage("m-072", "Translator found in metadata, but no translation year in colophon.", se.MESSAGE_TYPE_ERROR, filename))
 
 		identifier = (self.identifier or "").replace('https://', '')
 		# We can have:
