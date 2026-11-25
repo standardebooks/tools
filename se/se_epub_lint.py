@@ -406,6 +406,7 @@ SEMANTICS & CONTENT
 "s-096", "Heading element in half title page missing [val]fulltitle[/] semantic."
 "s-097", "[xhtml]<a>[/] element without [attr]@href[/] attribute."
 "s-098", "[xhtml]<header>[/] element with only one child."
+"s-099", "Century not written with numeric ordinals. [hint]Hint: E.g. [text]3rd century[/], not [text]third century[/].[/hint]"
 "s-100", "Anonymous digital contributor value not exactly [text]An Anonymous Volunteer[/]."
 "s-101", "Anonymous primary contributor value not exactly [text]Anonymous[/]."
 "s-102", "[attr]@lang[/] attribute detected. [hint]Hint: Use [attr]@xml:lang[/] instead.[/hint]"
@@ -415,8 +416,6 @@ SEMANTICS & CONTENT
 "s-106", "Proper name in the colophon without parent [xhtml]<a href=\"...\">[/] or [xhtml]<b epub:type=\"z3998:given-name\">[/], or [xhtml]<b>[/] if anonymous."
 "s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/] or [xhtml]<b>An Anonymous Sponsor</b>[/]. [hint]Hint: Is there a missing [attr]@epub:type[/] semantic?[/hint]"
 "s-108", "[xhtml]<thead>[/] element with non-empty [xhtml]<td>[/] descendant. [hint]Hint: Use [xhtml]<th>[/] instead.[/hint]"
-UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"s-099", ""
 
 TYPOGRAPHY
 "t-001", "Illegal double spacing. [hint]Hint: Sentences should be single-spaced. Spaces might include Unicode hair spaces and no-break spaces.[/hint]"
@@ -2092,6 +2091,11 @@ def _lint_special_file_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 
 		if ebook_flags["has_multiple_page_scans"] and not dom.xpath("/html/body//a[contains(@href, '#page-scans')]"):
 			messages.append(LintMessage("m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+		# Check for centuries written with words instead of numeric ordinals.
+		nodes = dom.xpath("/html/body//*[text()[re:test(., ' [a-z]+ century', 'i')]]")
+		if nodes:
+			messages.append(LintMessage("s-099", "Century not written with numeric ordinals. [hint]Hint: E.g. [text]3rd century[/], not [text]third century[/].[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 		# Check for dates without a `<time>` wrapper.
 		nodes = dom.xpath("/html/body//p[text()[re:test(., '\\b\\d{3,4}\\s')][not(following-sibling::abbr[1][re:test(., '^BCE?$')])]]")
